@@ -1,0 +1,12 @@
+{
+  "name": "sondages-vs-resultats",
+  "private": true,
+  "description": "Sondages de la présidentielle vs résultats : site statique + mise à jour automatique depuis Wikipédia.",
+  "scripts": {
+    "update": "node scripts/update-2027.js",
+    "test": "node scripts/test-parse.js"
+  },
+  "dependencies": {
+    "linkedom": "0.18.5"
+  }
+}
