@@ -528,6 +528,7 @@ body{padding:clamp(8px,2.5vw,32px)}
       };
       quick(TOP + ' premiers', 'Afficher seulement les ' + TOP + ' premiers', () => { st.hide = new Set(st.rank.slice(TOP)); });
       quick('Tous', 'Afficher tous les candidats', () => { st.hide = new Set(); });
+      quick('Aucun', 'Masquer tous les candidats', () => { st.hide = new Set(st.rank); });
       for (const c of st.rank) {
         const b = document.createElement('button');
         b.type = 'button';
@@ -550,7 +551,7 @@ body{padding:clamp(8px,2.5vw,32px)}
       initHide(y, D, R);
       const S = summary(y, D, R);
       const best = S.items.filter((d) => d.gap != null && !S.st.hide.has(d.c)).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))[0];
-      el.textContent = best ? `${best.c}, ${f1(best.mean)} % dans les sondages, ${f1(best.res)} % dans les urnes (${fGap(best.gap)} pts)` : 'aucun sondage coché dans la dernière semaine';
+      el.textContent = best ? `${best.c}, ${f1(best.mean)} % dans les sondages, ${f1(best.res)} % dans les urnes (${fGap(best.gap)} pts)` : (D.cands.every((c) => S.st.hide.has(c)) ? 'aucun candidat affiché' : 'aucun sondage coché dans la dernière semaine');
     });
 
     // ——— le graphique (zoom, déplacement, plein écran) ———
