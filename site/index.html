@@ -225,7 +225,7 @@ body{padding:clamp(8px,2.5vw,32px)}
   </section>
 
   <section class="sv-page" id="p2027" data-year="2027" hidden>
-    <p class="sv-take"><span class="sv-pill">Présidentielle 2027</span> Pas encore de résultat : le premier tour est attendu en avril 2027. À droite, la moyenne des sondages des <b data-draw="recent">—</b> derniers jours.</p>
+    <p class="sv-take"><span class="sv-pill">Présidentielle 2027</span> Pas encore de résultat : le premier tour est attendu en avril 2027. À droite, le niveau actuel de la courbe moyenne de chaque candidat.</p>
     <div class="sv-grid">
       <div class="sv-main">
         <div class="sv-bar">
@@ -662,18 +662,23 @@ body{padding:clamp(8px,2.5vw,32px)}
         if (!future && d.mean != null && d.res != null) gapEls.push(gr.append('line').attr('y1', yy(d.mean)).attr('y2', yy(d.res)).attr('stroke', ccol(d.c)).attr('stroke-width', 2));
       }
       for (const d of items) {
-        if (d.mean != null) ringEls.push(gr.append('circle').attr('cy', yy(d.mean)).attr('r', 4.5).attr('fill', CREAM).attr('stroke', ccol(d.c)).attr('stroke-width', 2.2));
+        if (d.mean != null && !future) ringEls.push(gr.append('circle').attr('cy', yy(d.mean)).attr('r', 4.5).attr('fill', CREAM).attr('stroke', ccol(d.c)).attr('stroke-width', 2.2));
       }
       for (const d of items) {
         if (d.res != null && !future) resEls.push(gr.append('circle').attr('cy', yy(d.res)).attr('r', 6).attr('fill', ccol(d.c)).attr('stroke', INK).attr('stroke-width', 1.6));
       }
 
       // encadrés à droite (fixes)
-      const nCl = items.filter((d) => d.res != null || d.mean != null).length;
+      // 2027 : pas de rond creux ; à droite, le niveau actuel de la courbe moyenne (ou, sans courbe, la moyenne récente)
+      if (future) for (const d of items) {
+        const e = meanEnd.get(d.c);
+        d.cur = e && (S.lastT - e.t) / DAY <= RECENT_2027 ? e.v : d.mean;
+      }
+      const nCl = items.filter((d) => (future ? d.cur != null : (d.res != null || d.mean != null))).length;
       const compact = nCl * (narrow ? 26 : 34) > (H - M.b - M.t);
       const lh = compact ? (narrow ? 14 : 16) : (narrow ? 26 : 34);
-      const cl = items.map((d) => ({...d, ay: yy(d.res != null ? d.res : d.mean != null ? d.mean : (meanEnd.get(d.c) || {v: 0}).v)}))
-        .filter((d) => d.res != null || d.mean != null).sort((a, b) => a.ay - b.ay);
+      const cl = items.map((d) => ({...d, ay: yy(future ? (d.cur != null ? d.cur : 0) : (d.res != null ? d.res : d.mean != null ? d.mean : 0))}))
+        .filter((d) => (future ? d.cur != null : (d.res != null || d.mean != null))).sort((a, b) => a.ay - b.ay);
       cl.forEach((d) => { d.ly = d.ay; });
       for (let it = 0; it < 4; it++) {
         for (let i = 1; i < cl.length; i++) if (cl[i].ly - cl[i - 1].ly < lh) cl[i].ly = cl[i - 1].ly + lh;
@@ -690,7 +695,7 @@ body{padding:clamp(8px,2.5vw,32px)}
         if (compact) {
           const t1 = gx.append('text').attr('x', tx0).attr('y', d.ly).attr('dy', '0.34em').attr('font-size', narrow ? 10 : 11.5).style('font-variant-numeric', 'tabular-nums');
           t1.append('tspan').attr('font-weight', 900).attr('fill', ccol(d.c)).text(d.c);
-          const v = future ? (d.mean != null ? f1(d.mean) : '—') : (d.res != null ? f1(d.res) : '—');
+          const v = future ? f1(d.cur) : (d.res != null ? f1(d.res) : '—');
           t1.append('tspan').attr('dx', 5).attr('font-weight', 700).attr('fill', INK).text(v);
           if (!future && d.gap != null) t1.append('tspan').attr('dx', 5).attr('fill', Math.abs(d.gap) >= 2 ? '#b31d14' : MUTED).attr('font-weight', 700).text(fGap(d.gap));
           continue;
@@ -700,7 +705,7 @@ body{padding:clamp(8px,2.5vw,32px)}
         if (!narrow && d.res != null) t.append('tspan').attr('dx', 6).attr('font-weight', 900).attr('fill', INK).text(f1(d.res) + ' %');
         const s = gx.append('text').attr('x', tx0).attr('y', d.ly + (narrow ? 10 : 11)).attr('font-size', narrow ? 10 : 11).attr('fill', MUTED)
           .style('font-variant-numeric', 'tabular-nums');
-        if (future) s.text((narrow ? '' : 'sondages récents ') + (d.mean != null ? f1(d.mean) + ' %' : '—'));
+        if (future) s.text((narrow ? '' : (st.merge ? 'courbe moyenne ' : 'sondages récents ')) + f1(d.cur) + ' %');
         else if (narrow) s.text(d.res != null ? f1(d.res) + (d.gap != null ? ' · ' + fGap(d.gap) : '') : '—');
         else {
           s.append('tspan').text('sondages ' + (d.mean != null ? f1(d.mean) : '—'));
