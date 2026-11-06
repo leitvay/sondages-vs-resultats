@@ -1,0 +1,36 @@
+name: Mise à jour des sondages 2027
+
+on:
+  schedule:
+    - cron: '17 5,11,17,23 * * *'   # 4 fois par jour (heures UTC)
+  workflow_dispatch: {}              # bouton « Run workflow » pour lancer à la main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mise-a-jour
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Test du lecteur de tableaux
+        run: npm test
+      - name: Lecture de Wikipédia et contrôles
+        run: npm run update
+      - name: Publication si nouveaux sondages
+        run: |
+          if git diff --quiet; then echo "Rien de nouveau."; exit 0; fi
+          git config user.name "robot-sondages"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data/sondages_2027.json
+          git commit -m "Sondages 2027 : mise à jour automatique"
+          git push
