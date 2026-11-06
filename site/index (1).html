@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sondages vs résultats · présidentielles 2012-2027</title>
+<meta name="description" content="Tous les sondages de premier tour de l'année précédant chaque présidentielle (2012, 2017, 2022, 2027), comparés aux résultats réels.">
+<meta property="og:title" content="Sondages vs résultats">
+<meta property="og:description" content="Un an de sondages avant chaque présidentielle, comparés aux résultats du premier tour.">
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+html,body{margin:0;background:#f3eee2}
+body{padding:clamp(8px,2.5vw,32px)}
+.sv-wrap{max-width:1440px;margin:0 auto}
+.dash-skeleton:empty{background:linear-gradient(90deg,#f6f1e4,#efe8d6,#f6f1e4)}
+.sv-modal{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(33,35,32,.55);backdrop-filter:blur(2px);animation:svfade .25s ease-out}
+.sv-modal[hidden]{display:none}
+@keyframes svfade{from{opacity:0}to{opacity:1}}
+.sv-modal-box{position:relative;max-width:620px;width:100%;max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box;background:#fffcf4;color:#212320;border:3px solid #212320;border-radius:16px;padding:clamp(22px,4vw,38px);font-family:'Public Sans',Arial,sans-serif;font-weight:500;box-shadow:0 18px 50px rgba(33,35,32,.35)}
+.sv-modal-x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:2px solid #212320;background:#fff;color:#212320;font:700 22px/1 'Public Sans',Arial,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sv-modal-x:hover{background:#fef7d9}
+.sv-modal-x:focus-visible,.sv-modal-go:focus-visible{outline:3px solid #f9c900;outline-offset:2px}
+.sv-modal-kick{margin:0 0 6px;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#6b675e}
+.sv-modal h2{margin:0 0 16px;padding-right:40px;font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:clamp(30px,6vw,46px);line-height:1;text-transform:uppercase}
+.sv-modal h2 .vs{font-size:.74em;background:#f9c900;padding:0 .16em;position:relative;top:.06em}
+.sv-modal h2 .res{color:#d1271c}
+.sv-modal p{margin:0 0 12px;font-size:15.5px;line-height:1.55}
+.sv-modal ul{margin:4px 0 16px;padding-left:20px;font-size:14.5px;line-height:1.5}
+.sv-modal li{margin:4px 0}
+.sv-modal .src{font-size:12.5px;color:#6b675e}
+.sv-modal-go{display:inline-block;margin-top:6px;font:900 15px 'Public Sans',Arial,sans-serif;background:#212320;color:#fffcf4;border:none;border-radius:999px;padding:12px 22px;cursor:pointer}
+.sv-modal-go:hover{background:#3a3c37}
+</style>
+<script>try { history.scrollRestoration = 'manual'; } catch (e) {}</script>
+<script src="assets/d3.min.js"></script>
+<script src="assets/dash-shim.js"></script>
+</head>
+<body>
+<div class="sv-modal" id="bienvenue" role="dialog" aria-modal="true" aria-labelledby="bienvenue-titre">
+  <div class="sv-modal-box">
+    <button type="button" class="sv-modal-x" data-close aria-label="Fermer">×</button>
+    <p class="sv-modal-kick">Présentation</p>
+    <h2 id="bienvenue-titre">Sondages <span class="vs">vs</span> <span class="res">résultats</span></h2>
+    <p>Cette plateforme recense les intentions de vote au premier tour de l'élection présidentielle publiées depuis 2012. Pour chaque scrutin (2012, 2017, 2022), elle couvre les douze mois qui précèdent le vote et met en regard les estimations des instituts et les résultats officiels du premier tour.</p>
+    <p>Pour 2027, les données portent sur les enquêtes publiées depuis avril 2026 et sont actualisées à mesure que de nouveaux sondages paraissent.</p>
+    <ul>
+      <li>Chaque point correspond à une hypothèse testée dans un sondage ; la courbe en donne une moyenne lissée.</li>
+      <li>Le point plein indique le score obtenu au premier tour, le cercle vide la moyenne des sondages réalisés dans les sept derniers jours de la campagne. L'écart entre les deux figure à droite du graphique.</li>
+      <li>Les onglets permettent de changer de scrutin. On peut filtrer par institut, ajouter ou retirer des candidats, zoomer et passer en plein écran.</li>
+    </ul>
+    <p class="src">Un sondage mesure un état de l'opinion à un moment donné, avec une marge d'erreur ; il n'a pas valeur de prévision.<br>Sources : listes de sondages de Wikipédia (fr) ; résultats officiels proclamés par le Conseil constitutionnel.</p>
+    <button type="button" class="sv-modal-go" data-close>Accéder aux graphiques</button>
+  </div>
+</div>
+<div class="sv-wrap">
+<style>
+.sv{--ink:#212320;--cream:#fffcf4;--muted:#6b675e;--line:#e6dfcc;--band:#fef7d9;--yel:#f9c900;--red:#d1271c;
+  background:var(--cream);color:var(--ink);font-family:'Public Sans',Arial,sans-serif;font-weight:500;
+  border:3px solid var(--ink);border-radius:14px;padding:clamp(14px,3vw,32px);display:flex;flex-direction:column;gap:18px}
+.sv-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;border-bottom:5px solid var(--ink);padding-bottom:12px}
+.sv-head h1{margin:0;font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:clamp(34px,6vw,64px);line-height:1;text-transform:uppercase;color:var(--ink);display:flex;flex-wrap:wrap;align-items:baseline;gap:0 .22em}
+.sv-head .vs{font-size:.74em;background:var(--yel);padding:0 .16em;position:relative;top:.1em}
+.sv-head .res{color:var(--red)}
+.sv-kicker{margin:0;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-bottom:6px}
+.sv-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.sv-tabs button{font-family:'Anton',Impact,sans-serif;font-size:clamp(20px,3vw,28px);line-height:1;padding:10px 22px 9px;border:3px solid var(--ink);border-radius:999px;background:transparent;color:var(--ink);cursor:pointer;letter-spacing:.02em}
+.sv-tabs button[aria-selected="true"]{background:var(--ink);color:var(--cream)}
+.sv-tabs button:hover:not([aria-selected="true"]){background:var(--band)}
+.sv-tabs button:focus-visible,.sv button:focus-visible,.sv input:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
+.sv-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;font-size:13px;color:var(--muted)}
+.sv-legend span{display:inline-flex;align-items:center;gap:7px}
+.sv-page{display:flex;flex-direction:column;gap:12px;container-type:inline-size}
+.sv-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,270px);gap:16px;align-items:start}
+.sv-main{position:sticky;top:8px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sv-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+@container (max-width:700px){.sv-grid{grid-template-columns:minmax(0,1fr)}.sv-main{top:0;z-index:3;background:var(--cream);padding-bottom:8px;box-shadow:0 8px 10px -8px rgba(33,35,32,.25)}}
+.sv-pill{background:var(--ink);color:var(--cream);padding:4px 12px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-right:6px;white-space:nowrap}
+.sv-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:4px 0 0;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.sv-h button{font:700 12px 'Public Sans',Arial,sans-serif;letter-spacing:0;text-transform:none;background:transparent;border:1.5px solid var(--ink);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
+.sv-h button:first-of-type{margin-left:auto}
+.sv-h button:hover{background:var(--band)}
+.sv-chips{display:flex;flex-direction:column;gap:5px}
+.sv-chip{display:flex;align-items:stretch;border:1.5px solid var(--line);border-left:5px solid var(--pc);border-radius:8px;background:#fff;overflow:hidden}
+.sv-chip.is-off{border-left-color:var(--line);opacity:.6}
+.sv-chip label{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;font-size:13px}
+.sv-chip input{accent-color:var(--pc);margin:0;width:15px;height:15px;flex:none}
+.sv-pts{font-weight:700;flex:1;min-width:0}
+.sv-pts span:not(.sv-n){overflow-wrap:anywhere;line-height:1.2}
+.sv-pts svg{flex:none}
+.sv-pts .sv-n{margin-left:auto;font-size:11px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sv-crv{border-left:1px dashed var(--line);font-size:11px;color:var(--muted);flex:none}
+.sv-crv svg{flex:none}
+.sv-crv.is-disabled{cursor:not-allowed;opacity:.45}
+.sv-merge{display:flex;gap:12px;align-items:flex-start;cursor:pointer;background:var(--band);border:2px solid var(--ink);border-radius:12px;padding:12px 14px}
+.sv-merge input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ink);flex:none}
+.sv-merge b{display:block;font-weight:900;font-size:15px;line-height:1.2}
+.sv-merge small{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.sv-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px}
+.sv-tools{display:flex;gap:6px;margin-left:auto}
+.sv-tools button{font:700 13px 'Public Sans',Arial,sans-serif;background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer;min-width:32px}
+.sv-tools button:hover{background:var(--band)}
+.sv-tools .sv-fullbtn{background:var(--ink);color:var(--cream)}
+.sv-tools .sv-fullbtn:hover{background:#3a3c37}
+.sv-help{margin:0;font-size:11.5px;color:var(--muted)}
+.sv-grid.is-full{position:fixed;inset:0;z-index:2147483000;background:var(--cream);padding:16px 20px;overflow:auto;grid-template-columns:minmax(0,1fr) minmax(230px,270px);font-family:'Public Sans',Arial,sans-serif;color:var(--ink);--ink:#212320;--cream:#fffcf4;--muted:#6b675e;--line:#e6dfcc;--band:#fef7d9;--yel:#f9c900}
+.sv-grid.is-full .sv-main{position:static}
+.sv-grid.is-full .sv-side{max-height:calc(100vh - 32px);overflow:auto}
+.sv-cands{display:flex;flex-wrap:wrap;gap:6px}
+.sv-cands button{display:inline-flex;align-items:center;gap:7px;font:700 13px 'Public Sans',Arial,sans-serif;background:#fff;border:1.5px solid var(--line);color:var(--ink);border-radius:999px;padding:4px 12px 4px 8px;cursor:pointer}
+.sv-cands .sv-quick{background:var(--ink);color:var(--cream);border-color:var(--ink);padding:4px 12px}
+.sv-cands .sv-quick:hover{background:#3a3c37}
+.sv-cands button i{width:11px;height:11px;border-radius:50%;background:var(--cc)}
+.sv-cands button[aria-pressed="false"]{color:var(--muted);text-decoration:line-through;background:transparent}
+.sv-cands button[aria-pressed="false"] i{background:transparent;border:1.5px solid var(--cc)}
+.sv-take{margin:0;font-size:15px;line-height:1.9}
+.sv-take b{font-weight:900}
+.sv-chart{position:relative;min-height:280px;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:6px 6px 2px}
+.sv-chart svg{display:block;font-family:'Public Sans',Arial,sans-serif}
+.sv-tip{position:absolute;pointer-events:none;background:#fff;border:1.5px solid var(--ink);border-radius:8px;box-shadow:0 6px 18px rgba(33,35,32,.18);padding:7px 10px;font-size:12px;line-height:1.45;min-width:170px;z-index:2}
+.sv-tip .d{color:var(--muted)}
+.sv-tip .p{font-weight:900;display:flex;align-items:center;gap:6px}
+.sv-tip .r{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.sv-tip .r.on{font-weight:900}
+.sv-tip .r i,.sv-tip .p i{width:9px;height:9px;border-radius:50%;flex:none}
+.sv-tip .r span:last-child{margin-left:auto;padding-left:12px}
+.sv-fail{display:flex;align-items:center;justify-content:center;gap:8px;min-height:320px;color:var(--muted);font-size:13px}
+.sv-fail::before{content:'';width:.375rem;height:.375rem;border-radius:50%;background:var(--red)}
+.sv-note{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.sv [data-dash-source-state=refreshing]{opacity:.5}
+.sv [hidden]{display:none!important}
+</style>
+
+<div class="sv">
+  <header class="sv-head">
+    <h1 id="titre">Sondages <span class="vs">vs</span> <span class="res">résultats</span></h1>
+    <p class="sv-kicker">Présidentielles, 1er tour · un an de sondages</p>
+  </header>
+
+  <nav class="sv-tabs" role="tablist" aria-label="Élection">
+    <button role="tab" data-tab="2012" aria-selected="false">2012</button>
+    <button role="tab" data-tab="2017" aria-selected="false">2017</button>
+    <button role="tab" data-tab="2022" aria-selected="true">2022</button>
+    <button role="tab" data-tab="2027" aria-selected="false">2027</button>
+  </nav>
+
+  <div class="sv-legend" aria-label="Légende">
+    <span><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3" fill="#6b675e" fill-opacity="0.5"></circle></svg>un sondage</span>
+    <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#6b675e" stroke-width="3" stroke-linecap="round"></line></svg>courbe moyenne</span>
+    <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#6b675e" stroke-width="1.6" stroke-dasharray="5 3"></line></svg>courbe d'un institut</span>
+    <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="#6b675e" stroke="#212320" stroke-width="1.5"></circle></svg>résultat réel</span>
+    <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="#fffcf4" stroke="#6b675e" stroke-width="2"></circle></svg>moyenne des sondages de la dernière semaine</span>
+    <span><svg width="16" height="12" aria-hidden="true"><rect x="0" y="0" width="16" height="12" rx="2" fill="#fef7d9" stroke="#e8d27a"></rect></svg>dernière semaine</span>
+  </div>
+
+  <section class="sv-page" id="p2012" data-year="2012" hidden>
+    <p class="sv-take"><span class="sv-pill">Présidentielle 2012</span> Plus gros écart entre la dernière semaine de sondages et le résultat (parmi les candidats affichés) : <b data-draw="gap2012" data-source="s2012 resultats">—</b></p>
+    <div class="sv-grid">
+      <div class="sv-main">
+        <div class="sv-bar">
+          <div class="sv-cands" data-draw="cands2012" data-source="s2012 resultats">—</div>
+          <div class="sv-tools" role="group" aria-label="Zoom du graphique">
+            <button type="button" data-zoomin="2012" aria-label="Zoomer" title="Zoomer">+</button>
+            <button type="button" data-zoomout="2012" aria-label="Dézoomer" title="Dézoomer">−</button>
+            <button type="button" data-zoomreset="2012">Vue complète</button>
+            <button type="button" class="sv-fullbtn" data-full="2012"><span class="sv-go">⤢ Plein écran</span><span class="sv-quit" hidden>✕ Quitter</span></button>
+          </div>
+        </div>
+        <div class="sv-chart dash-skeleton" data-draw="chart2012" data-source="s2012 resultats"></div>
+        <p class="sv-help">Glisser pour se déplacer dans le temps · double-clic, boutons +/− ou Ctrl + molette pour zoomer (molette seule en plein écran) · Échap pour quitter le plein écran.</p>
+      </div>
+      <aside class="sv-side" aria-label="Réglages 2012">
+        <label class="sv-merge"><input type="checkbox" data-merge="2012" checked><span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span></label>
+        <p class="sv-h">Instituts <button data-all="2012">Tout cocher</button><button data-none="2012">Aucun</button></p>
+        <div class="sv-chips" data-draw="chips2012" data-source="s2012">—</div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="sv-page" id="p2017" data-year="2017" hidden>
+    <p class="sv-take"><span class="sv-pill">Présidentielle 2017</span> Plus gros écart entre la dernière semaine de sondages et le résultat (parmi les candidats affichés) : <b data-draw="gap2017" data-source="s2017 resultats">—</b></p>
+    <div class="sv-grid">
+      <div class="sv-main">
+        <div class="sv-bar">
+          <div class="sv-cands" data-draw="cands2017" data-source="s2017 resultats">—</div>
+          <div class="sv-tools" role="group" aria-label="Zoom du graphique">
+            <button type="button" data-zoomin="2017" aria-label="Zoomer" title="Zoomer">+</button>
+            <button type="button" data-zoomout="2017" aria-label="Dézoomer" title="Dézoomer">−</button>
+            <button type="button" data-zoomreset="2017">Vue complète</button>
+            <button type="button" class="sv-fullbtn" data-full="2017"><span class="sv-go">⤢ Plein écran</span><span class="sv-quit" hidden>✕ Quitter</span></button>
+          </div>
+        </div>
+        <div class="sv-chart dash-skeleton" data-draw="chart2017" data-source="s2017 resultats"></div>
+        <p class="sv-help">Glisser pour se déplacer dans le temps · double-clic, boutons +/− ou Ctrl + molette pour zoomer (molette seule en plein écran) · Échap pour quitter le plein écran.</p>
+      </div>
+      <aside class="sv-side" aria-label="Réglages 2017">
+        <label class="sv-merge"><input type="checkbox" data-merge="2017" checked><span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span></label>
+        <p class="sv-h">Instituts <button data-all="2017">Tout cocher</button><button data-none="2017">Aucun</button></p>
+        <div class="sv-chips" data-draw="chips2017" data-source="s2017">—</div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="sv-page" id="p2022" data-year="2022">
+    <p class="sv-take"><span class="sv-pill">Présidentielle 2022</span> Plus gros écart entre la dernière semaine de sondages et le résultat (parmi les candidats affichés) : <b data-draw="gap2022" data-source="s2022 resultats">—</b></p>
+    <div class="sv-grid">
+      <div class="sv-main">
+        <div class="sv-bar">
+          <div class="sv-cands" data-draw="cands2022" data-source="s2022 resultats">—</div>
+          <div class="sv-tools" role="group" aria-label="Zoom du graphique">
+            <button type="button" data-zoomin="2022" aria-label="Zoomer" title="Zoomer">+</button>
+            <button type="button" data-zoomout="2022" aria-label="Dézoomer" title="Dézoomer">−</button>
+            <button type="button" data-zoomreset="2022">Vue complète</button>
+            <button type="button" class="sv-fullbtn" data-full="2022"><span class="sv-go">⤢ Plein écran</span><span class="sv-quit" hidden>✕ Quitter</span></button>
+          </div>
+        </div>
+        <div class="sv-chart dash-skeleton" data-draw="chart2022" data-source="s2022 resultats"></div>
+        <p class="sv-help">Glisser pour se déplacer dans le temps · double-clic, boutons +/− ou Ctrl + molette pour zoomer (molette seule en plein écran) · Échap pour quitter le plein écran.</p>
+      </div>
+      <aside class="sv-side" aria-label="Réglages 2022">
+        <label class="sv-merge"><input type="checkbox" data-merge="2022" checked><span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span></label>
+        <p class="sv-h">Instituts <button data-all="2022">Tout cocher</button><button data-none="2022">Aucun</button></p>
+        <div class="sv-chips" data-draw="chips2022" data-source="s2022">—</div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="sv-page" id="p2027" data-year="2027" hidden>
+    <p class="sv-take"><span class="sv-pill">Présidentielle 2027</span> Pas encore de résultat : le premier tour est attendu en avril 2027. À droite, le niveau actuel de la courbe moyenne de chaque candidat.</p>
+    <div class="sv-grid">
+      <div class="sv-main">
+        <div class="sv-bar">
+          <div class="sv-cands" data-draw="cands2027" data-source="s2027 resultats">—</div>
+          <div class="sv-tools" role="group" aria-label="Zoom du graphique">
+            <button type="button" data-zoomin="2027" aria-label="Zoomer" title="Zoomer">+</button>
+            <button type="button" data-zoomout="2027" aria-label="Dézoomer" title="Dézoomer">−</button>
+            <button type="button" data-zoomreset="2027">Vue complète</button>
+            <button type="button" class="sv-fullbtn" data-full="2027"><span class="sv-go">⤢ Plein écran</span><span class="sv-quit" hidden>✕ Quitter</span></button>
+          </div>
+        </div>
+        <div class="sv-chart dash-skeleton" data-draw="chart2027" data-source="s2027 resultats"></div>
+        <p class="sv-help">Glisser pour se déplacer dans le temps · double-clic, boutons +/− ou Ctrl + molette pour zoomer (molette seule en plein écran) · Échap pour quitter le plein écran.</p>
+      </div>
+      <aside class="sv-side" aria-label="Réglages 2027">
+        <label class="sv-merge"><input type="checkbox" data-merge="2027" checked><span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span></label>
+        <p class="sv-h">Instituts <button data-all="2027">Tout cocher</button><button data-none="2027">Aucun</button></p>
+        <div class="sv-chips" data-draw="chips2027" data-source="s2027">—</div>
+      </aside>
+    </div>
+  </section>
+
+  <p class="sv-note">Source : listes de sondages de Wikipédia (fr) et résultats officiels du 1er tour. Un point = un sondage, une hypothèse testée (un institut teste parfois plusieurs listes de candidats dans le même sondage). Les courbes sont une moyenne locale des sondages, sans prolongement au-delà du dernier sondage ; avant le calcul, les hypothèses d'un même sondage sont moyennées. Dernière semaine = sondages terminés dans les <span data-draw="lastweek">—</span> jours avant le vote. Par défaut, seuls les <span data-draw="top">—</span> premiers candidats sont affichés (résultat du 1er tour, ou moyenne des sondages récents pour 2027) : cliquez sur un nom pour ajouter ou retirer un candidat. Passez sur un point pour voir l'institut, la date et l'hypothèse.</p>
+</div>
+
+<script>
+(() => {
+  const YEARS = ['2012', '2017', '2022', '2027'];
+  const open = (y) => {
+    for (const s of document.querySelectorAll('.sv-page[data-year]')) s.hidden = s.dataset.year !== y;
+    for (const b of document.querySelectorAll('.sv-tabs [data-tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === y));
+  };
+  for (const b of document.querySelectorAll('.sv-tabs [data-tab]')) {
+    b.addEventListener('click', () => { open(b.dataset.tab); });
+  }
+  const m = /^p(\d{4})$/.exec(location.hash.slice(1));
+  if (m && YEARS.includes(m[1])) open(m[1]);
+
+  const S = window.SVSTATE = {};
+  window.svState = (y) => S[y] || (S[y] = {off: new Set(), curves: new Set(), merge: true, hide: new Set()});
+  const redraw = (y) => { dash.draw('chips' + y); dash.draw('cands' + y); dash.draw('gap' + y); dash.draw('chart' + y); };
+  window.svRedraw = redraw;
+  for (const inp of document.querySelectorAll('input[data-merge]')) {
+    svState(inp.dataset.merge).merge = inp.checked;
+    inp.addEventListener('change', () => { svState(inp.dataset.merge).merge = inp.checked; dash.draw('chart' + inp.dataset.merge); });
+  }
+
+  // zoom et plein écran
+  for (const b of document.querySelectorAll('button[data-zoomin]')) b.addEventListener('click', () => { const z = (window.SVZOOM || {})[b.dataset.zoomin]; if (z) z.by(2); });
+  for (const b of document.querySelectorAll('button[data-zoomout]')) b.addEventListener('click', () => { const z = (window.SVZOOM || {})[b.dataset.zoomout]; if (z) z.by(0.5); });
+  for (const b of document.querySelectorAll('button[data-zoomreset]')) b.addEventListener('click', () => { const z = (window.SVZOOM || {})[b.dataset.zoomreset]; if (z) z.reset(); });
+  const setFull = (grid, on) => {
+    if (!grid) return;
+    grid.classList.toggle('is-full', on);
+    for (const b of grid.querySelectorAll('button[data-full]')) {
+      b.setAttribute('aria-pressed', String(on));
+      for (const sp of b.querySelectorAll('.sv-go')) sp.hidden = on;
+      for (const sp of b.querySelectorAll('.sv-quit')) sp.hidden = !on;
+    }
+    const y = grid.closest('.sv-page') && grid.closest('.sv-page').dataset.year;
+    if (y) requestAnimationFrame(() => dash.draw('chart' + y));
+  };
+  for (const b of document.querySelectorAll('button[data-full]')) {
+    b.addEventListener('click', () => {
+      const grid = b.closest('.sv-grid');
+      if (!grid) return;
+      const on = !grid.classList.contains('is-full');
+      setFull(grid, on);
+      try {
+        if (on && grid.requestFullscreen) grid.requestFullscreen().catch(() => {});
+        else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      } catch (e) { /* le mode plein écran de la page suffit */ }
+    });
+  }
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) for (const g of document.querySelectorAll('.sv-grid.is-full')) setFull(g, false);
+    else for (const g of document.querySelectorAll('.sv-grid.is-full')) { const y = g.closest('.sv-page') && g.closest('.sv-page').dataset.year; if (y) dash.draw('chart' + y); }
+  });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') for (const g of document.querySelectorAll('.sv-grid.is-full')) setFull(g, false);
+  });
+  for (const b of document.querySelectorAll('button[data-all]')) {
+    b.addEventListener('click', () => { svState(b.dataset.all).off.clear(); redraw(b.dataset.all); });
+  }
+  for (const b of document.querySelectorAll('button[data-none]')) {
+    b.addEventListener('click', () => {
+      const y = b.dataset.none, D = window.svParse && window.svParse(y);
+      if (D) for (const p of D.pollsters) svState(y).off.add(p.name);
+      redraw(y);
+    });
+  }
+})();
+</script>
+
+<script>
+(() => {
+  // Couleurs choisies (constantes de mise en forme, pas des données)
+  const CC = {'Mélenchon': '#d62828', 'Le Pen': '#8a5a2b', 'Macron': '#2f80ed', 'Sarkozy': '#16285f', 'Hollande': '#e0609a',
+    'Bayrou': '#f08c2e', 'Fillon': '#16285f', 'Hamon': '#e0609a', 'Zemmour': '#4a4a4a', 'Pécresse': '#16285f', 'Jadot': '#2e9959',
+    'Glucksmann': '#f07167', 'Philippe': '#1a9fa8', 'Lisnard': '#5a7bd8', 'Attal': '#2f80ed',
+    'Joly': '#2e9959', 'Dupont-Aignan': '#3d5a80', 'Poutou': '#c44536', 'Arthaud': '#7a0c0c', 'Cheminade': '#8d99ae',
+    'Lassalle': '#a07e3b', 'Asselineau': '#5e548e', 'Roussel': '#9d0208', 'Hidalgo': '#e0609a',
+    'Retailleau': '#16285f', 'Tondelier': '#2e9959', 'Bardella': '#5c3d1e', 'Villepin': '#6d597a', 'Ruffin': '#e85d04',
+    'Faure': '#c9184a', 'Bouamrane': '#d4a017'};
+  const TOP = 4; // nombre de candidats affichés par défaut
+  const PC = {'Ifop': '#E4572E', 'Ipsos': '#2D7DD2', 'Harris Interactive': '#2BAE66', 'OpinionWay': '#F4A259', 'Elabe': '#8E6CCF',
+    'BVA': '#D1495B', 'Odoxa': '#00A6A6', 'Kantar (TNS Sofres)': '#6C8EAD', 'CSA': '#C9A227', 'LH2': '#8D6E63', 'Cluster17': '#EF476F',
+    'YouGov': '#B5179E', 'AtlasIntel': '#264653', 'Verian': '#90BE6D', 'Dedicated Research': '#9A8C98', 'Scan Research': '#6D597A'};
+  const ORDER = Object.keys(PC);
+  const FALL = ['#457B9D', '#E76F51', '#2A9D8F', '#A8763E', '#7B2CBF', '#5C7AEA'];
+  const DASHES = ['7 3', '2 3', '9 3 2 3', '4 4', '1.5 2.5', '12 4', '6 2 1.5 2', '3 6', '11 3 3 3', '6 6', '2 6', '14 3', '5 3 5 6', '1 4', '8 2', '3 2 3 6'];
+  const META = new Set(['date', 'terrain', 'institut', 'publie', 'hypothese']);
+  const DAY = 864e5;
+  const ASSUMED_2027 = '2027-04-11'; // 1er tour 2027 supposé à la mi-avril (date pas encore fixée)
+  const LAST_WEEK = 7, RECENT_2027 = 30;
+  const INK = '#212320', CREAM = '#fffcf4', MUTED = '#6b675e', GRID = '#ece6d6', BAND = '#fef7d9';
+
+  const fr = d3.timeFormatLocale({dateTime: '%A %e %B %Y à %X', date: '%d/%m/%Y', time: '%H:%M:%S', periods: ['', ''],
+    days: ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'], shortDays: ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'],
+    months: ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
+    shortMonths: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']});
+  const fMon = fr.utcFormat('%b'), fMonY = fr.utcFormat('%b %Y'), fDay = fr.utcFormat('%-d %B %Y'), fDayS = fr.utcFormat('%-d %b');
+  const f1 = (v) => v.toFixed(1).replace('.', ',');
+  const f0 = (v) => (Math.round(v * 10) / 10).toString().replace('.', ',');
+  const fGap = (g) => (g > 0.05 ? '+' : g < -0.05 ? '−' : '±') + f1(Math.abs(g));
+  const pcol = (name, i) => PC[name] || FALL[i % FALL.length];
+  const pdash = (name, i) => DASHES[(ORDER.includes(name) ? ORDER.indexOf(name) : ORDER.length + i) % DASHES.length];
+  const ccol = (c) => CC[c] || MUTED;
+  const toDate = (s) => new Date(String(s).slice(0, 10) + 'T00:00:00Z');
+
+  const cache = new WeakMap();
+  const parse = (y) => {
+    const g = dash.data('s' + y);
+    if (g.status !== 'ok' || !Array.isArray(g.data)) return null;
+    if (cache.has(g.data)) return cache.get(g.data);
+    const cols = ((g.columns && g.columns.length) ? g.columns : Object.keys(g.data[0] || {})).filter((c) => !META.has(c));
+    const rows = g.data.map((r, i) => {
+      const o = {i, t: toDate(r.date), institut: String(r.institut), terrain: r.terrain == null ? '' : String(r.terrain), hyp: Number(r.hypothese) || 1, v: {}};
+      for (const c of cols) { const x = r[c]; o.v[c] = (x === null || x === undefined || x === '' || isNaN(Number(x))) ? null : Number(x); }
+      return o;
+    }).filter((r) => !isNaN(r.t));
+    const cnt = d3.rollup(rows, (v) => new Set(v.map((r) => +r.t)).size, (r) => r.institut);
+    const pollsters = [...cnt].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([name, n], i) => ({name, n, color: pcol(name, i), dash: pdash(name, i)}));
+    const D = {rows, cands: cols, pollsters, pmap: new Map(pollsters.map((p) => [p.name, p]))};
+    cache.set(g.data, D);
+    return D;
+  };
+  window.svParse = parse;
+
+  const results = (y) => {
+    const g = dash.data('resultats');
+    if (g.status !== 'ok' || !Array.isArray(g.data)) return {status: g.status, map: new Map(), date: null};
+    const rs = g.data.filter((r) => String(r.election) === y);
+    return {status: 'ok', map: new Map(rs.map((r) => [String(r.candidat), Number(r.score)])), date: rs.length ? toDate(rs[0].date) : null};
+  };
+
+  // moyenne par sondage (les hypothèses d'un même sondage sont moyennées)
+  const perPoll = (rows, c) => {
+    const g = d3.groups(rows.filter((r) => r.v[c] != null), (r) => r.institut + '|' + (+r.t));
+    return g.map(([, rs]) => ({t: rs[0].t, v: d3.mean(rs, (r) => r.v[c])})).sort((a, b) => a.t - b.t);
+  };
+
+  // régression locale linéaire, noyau gaussien à largeur adaptative, bornée par les sondages voisins
+  const smooth = (pts, sigma = 5, step = 0.5) => {
+    const n = pts.length;
+    if (n < 3) return [];
+    const t0 = +pts[0].t, t = pts.map((p) => (p.t - t0) / DAY), v = pts.map((p) => p.v);
+    const k = Math.min(10, n), tmax = t[n - 1], out = [], ad = new Float64Array(n), w = new Float64Array(n);
+    for (let g = 0; g <= tmax + 1e-9; g += step) {
+      for (let j = 0; j < n; j++) ad[j] = Math.abs(t[j] - g);
+      const sorted = Float64Array.from(ad).sort();
+      const sig = Math.max(sigma, 0.7 * sorted[k - 1]);
+      let S0 = 0, S1 = 0, S2 = 0, T0 = 0, T1 = 0, wmax = 0;
+      for (let j = 0; j < n; j++) {
+        const dx = t[j] - g, ww = Math.exp(-0.5 * (dx / sig) ** 2);
+        w[j] = ww; if (ww > wmax) wmax = ww;
+        S0 += ww; S1 += ww * dx; S2 += ww * dx * dx; T0 += ww * v[j]; T1 += ww * dx * v[j];
+      }
+      if (S0 <= 0.4) continue;
+      const den = S0 * S2 - S1 * S1;
+      let yv = den > 1e-6 * S0 * S0 * sigma * sigma ? (S2 * T0 - S1 * T1) / den : T0 / S0;
+      let lo = Infinity, hi = -Infinity;
+      for (let j = 0; j < n; j++) if (w[j] > 0.05 * wmax) { if (v[j] < lo) lo = v[j]; if (v[j] > hi) hi = v[j]; }
+      yv = Math.min(hi, Math.max(lo, yv));
+      out.push({t: new Date(t0 + g * DAY), v: yv});
+    }
+    return out;
+  };
+
+  // calculs partagés par l'onglet : sondages cochés, moyennes de la dernière semaine, écarts
+  const summary = (y, D, R) => {
+    const st = svState(y);
+    const on = D.rows.filter((r) => !st.off.has(r.institut));
+    const elec = R.date;
+    const lastT = d3.max(D.rows, (r) => r.t);
+    const items = D.cands.map((c) => {
+      let mean = null;
+      if (elec) {
+        const pts = perPoll(on.filter((r) => { const d = (elec - r.t) / DAY; return d > 0 && d <= LAST_WEEK; }), c);
+        if (pts.length) mean = d3.mean(pts, (p) => p.v);
+      } else if (lastT) {
+        const pts = perPoll(on.filter((r) => (lastT - r.t) / DAY <= RECENT_2027), c);
+        if (pts.length) mean = d3.mean(pts, (p) => p.v);
+      }
+      const res = R.map.has(c) ? R.map.get(c) : null;
+      return {c, mean, res, gap: (res != null && mean != null) ? res - mean : null};
+    });
+    return {st, on, elec, lastT, items};
+  };
+
+  // par défaut : les 4 meilleurs résultats du 1er tour, ou les 4 plus hauts dans les sondages récents (2027)
+  const ranking = (y, D, R) => {
+    const lastT = d3.max(D.rows, (r) => r.t);
+    const score = (c) => {
+      if (R.map.has(c)) return R.map.get(c);
+      const pts = perPoll(D.rows.filter((r) => (lastT - r.t) / DAY <= RECENT_2027), c);
+      return pts.length ? d3.mean(pts, (p) => p.v) : -1;
+    };
+    return D.cands.map((c) => [c, score(c)]).sort((a, b) => b[1] - a[1]).map((e) => e[0]);
+  };
+  const initHide = (y, D, R) => {
+    const st = svState(y);
+    if (st.inited || !D || R.status !== 'ok') return;
+    st.inited = true;
+    st.rank = ranking(y, D, R);
+    st.hide = new Set(st.rank.slice(TOP));
+  };
+
+  const fail = (el, status) => {
+    el.classList.remove('dash-skeleton');
+    if (status === 'error' || status === 'missing') {
+      el.replaceChildren(Object.assign(document.createElement('div'), {className: 'sv-fail', textContent: 'Échec du chargement'}));
+    } else { el.replaceChildren(); el.classList.add('dash-skeleton'); }
+  };
+
+  dash.draw('recent', (el) => { el.textContent = String(RECENT_2027); });
+  dash.draw('lastweek', (el) => { el.textContent = String(LAST_WEEK); });
+  dash.draw('top', (el) => { el.textContent = String(TOP); });
+
+  for (const y of ['2012', '2017', '2022', '2027']) {
+
+    // ——— cases à cocher des instituts ———
+    dash.draw('chips' + y, (el) => {
+      const D = parse(y);
+      if (!D) { el.textContent = '—'; return; }
+      const st = svState(y);
+      el.replaceChildren();
+      for (const p of D.pollsters) {
+        const chip = document.createElement('div');
+        chip.className = 'sv-chip' + (st.off.has(p.name) ? ' is-off' : '');
+        chip.style.setProperty('--pc', p.color);
+
+        const l1 = document.createElement('label'); l1.className = 'sv-pts';
+        const c1 = document.createElement('input'); c1.type = 'checkbox'; c1.checked = !st.off.has(p.name);
+        c1.setAttribute('aria-label', 'Afficher les sondages ' + p.name);
+        const sw = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        sw.setAttribute('width', '10'); sw.setAttribute('height', '10'); sw.setAttribute('aria-hidden', 'true');
+        d3.select(sw).append('circle').attr('cx', 5).attr('cy', 5).attr('r', 4.5).attr('fill', p.color);
+        const nm = document.createElement('span'); nm.textContent = p.name;
+        const nn = document.createElement('span'); nn.className = 'sv-n'; nn.textContent = String(p.n); nn.title = 'nombre de sondages';
+        l1.append(c1, sw, nm, nn);
+
+        const enough = p.n >= 3;
+        const l2 = document.createElement('label'); l2.className = 'sv-crv' + ((!enough || !c1.checked) ? ' is-disabled' : '');
+        const c2 = document.createElement('input'); c2.type = 'checkbox'; c2.checked = st.curves.has(p.name); c2.disabled = !enough || !c1.checked;
+        c2.setAttribute('aria-label', 'Courbe ' + p.name);
+        const ds = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        ds.setAttribute('width', '28'); ds.setAttribute('height', '8'); ds.setAttribute('aria-hidden', 'true');
+        d3.select(ds).append('line').attr('x1', 1).attr('x2', 27).attr('y1', 4).attr('y2', 4).attr('stroke', p.color).attr('stroke-width', 2).attr('stroke-dasharray', p.dash);
+        const tx = document.createElement('span'); tx.textContent = enough ? 'courbe' : 'trop peu';
+        l2.append(c2, ds, tx);
+
+        c1.addEventListener('change', () => {
+          if (c1.checked) st.off.delete(p.name); else st.off.add(p.name);
+          chip.classList.toggle('is-off', !c1.checked);
+          c2.disabled = !enough || !c1.checked; l2.classList.toggle('is-disabled', c2.disabled);
+          dash.draw('chart' + y); dash.draw('gap' + y);
+        });
+        c2.addEventListener('change', () => {
+          if (c2.checked) st.curves.add(p.name); else st.curves.delete(p.name);
+          dash.draw('chart' + y);
+        });
+        chip.append(l1, l2);
+        el.append(chip);
+      }
+    });
+
+    // ——— boutons des candidats (afficher / masquer) ———
+    dash.draw('cands' + y, (el) => {
+      const D = parse(y), R = results(y);
+      if (!D || R.status !== 'ok') { el.textContent = '—'; return; }
+      initHide(y, D, R);
+      const st = svState(y);
+      el.replaceChildren();
+      const quick = (label, title, fn) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'sv-quick'; b.textContent = label; b.title = title;
+        b.addEventListener('click', () => { fn(); dash.draw('cands' + y); dash.draw('chart' + y); dash.draw('gap' + y); });
+        el.append(b);
+      };
+      quick(TOP + ' premiers', 'Afficher seulement les ' + TOP + ' premiers', () => { st.hide = new Set(st.rank.slice(TOP)); });
+      quick('Tous', 'Afficher tous les candidats', () => { st.hide = new Set(); });
+      quick('Aucun', 'Masquer tous les candidats', () => { st.hide = new Set(st.rank); });
+      for (const c of st.rank) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.style.setProperty('--cc', ccol(c));
+        b.setAttribute('aria-pressed', String(!st.hide.has(c)));
+        b.append(document.createElement('i'), document.createTextNode(c));
+        b.addEventListener('click', () => {
+          if (st.hide.has(c)) st.hide.delete(c); else st.hide.add(c);
+          b.setAttribute('aria-pressed', String(!st.hide.has(c)));
+          dash.draw('chart' + y); dash.draw('gap' + y);
+        });
+        el.append(b);
+      }
+    });
+
+    // ——— phrase : plus gros écart ———
+    dash.draw('gap' + y, (el) => {
+      const D = parse(y), R = results(y);
+      if (!D || R.status !== 'ok') { el.textContent = '—'; return; }
+      initHide(y, D, R);
+      const S = summary(y, D, R);
+      const best = S.items.filter((d) => d.gap != null && !S.st.hide.has(d.c)).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))[0];
+      el.textContent = best ? `${best.c}, ${f1(best.mean)} % dans les sondages, ${f1(best.res)} % dans les urnes (${fGap(best.gap)} pts)` : (D.cands.every((c) => S.st.hide.has(c)) ? 'aucun candidat affiché' : 'aucun sondage coché dans la dernière semaine');
+    });
+
+    // ——— le graphique (zoom, déplacement, plein écran) ———
+    dash.draw('chart' + y, (el) => {
+      const D = parse(y), R = results(y);
+      if (!D || R.status !== 'ok') { fail(el, !D ? dash.data('s' + y).status : R.status); return; }
+      el.classList.remove('dash-skeleton');
+      initHide(y, D, R);
+      const S = summary(y, D, R), st = S.st;
+      const vis = D.cands.filter((c) => !st.hide.has(c));
+      const future = !S.elec;
+      const xEndData = future ? new Date(+S.lastT + 6 * DAY) : S.elec;
+      const anchorDate = future ? toDate(ASSUMED_2027) : S.elec;
+      const x0 = new Date(+anchorDate - 365 * DAY);
+      const full = !!el.closest('.is-full');
+
+      const W = Math.max(300, el.clientWidth - 12);
+      const narrow = W < 620;
+      const vh = window.innerHeight || 800;
+      const H = full ? Math.round(Math.max(320, vh - 130))
+        : Math.round(Math.max(280, Math.min(560, W * (narrow ? 0.8 : 0.55), narrow ? vh * 0.5 : vh - 170)));
+      const CW = narrow ? 96 : Math.min(230, Math.max(170, W * 0.2));
+
+      el.replaceChildren();
+      const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+        .attr('aria-label', `Sondages ${y} et résultats du premier tour`).style('touch-action', 'none');
+
+      const shown = S.on;
+      let ymax = 0;
+      for (const r of shown) for (const c of vis) if (r.v[c] != null && r.t >= x0) ymax = Math.max(ymax, r.v[c]);
+      for (const c of vis) if (R.map.has(c)) ymax = Math.max(ymax, R.map.get(c));
+      ymax = Math.max(10, Math.ceil((ymax + 2) / 5) * 5);
+      const ticks = d3.scaleLinear([0, ymax], [0, 1]).ticks(narrow || H < 380 ? 5 : 7);
+
+      const probe = svg.append('text').attr('font-size', 11).text(ticks[ticks.length - 1] + ' %');
+      const ML = Math.ceil(probe.node().getComputedTextLength()) + 10; probe.remove();
+      const M = {t: 26, r: CW, b: 28, l: ML};
+      const plotR = W - M.r - (future ? 8 : 10);
+      const xBase = d3.scaleUtc([x0, xEndData], [M.l, plotR]);
+      const yy = d3.scaleLinear([0, ymax], [H - M.b, M.t]);
+      let xz = xBase;
+
+      // zone de tracé découpée (le zoom ne déborde pas sur les axes ni les encadrés)
+      const clipId = 'svclip' + y;
+      svg.append('defs').append('clipPath').attr('id', clipId).append('rect')
+        .attr('x', M.l).attr('y', M.t - 12).attr('width', plotR - M.l + 9).attr('height', H - M.b - M.t + 12);
+
+      const band = future ? null : svg.append('rect').attr('y', M.t - 8).attr('height', H - M.b - M.t + 8).attr('fill', BAND).attr('clip-path', `url(#${clipId})`);
+      const gy = svg.append('g');
+      for (const tk of ticks) {
+        gy.append('line').attr('x1', M.l).attr('x2', plotR).attr('y1', yy(tk)).attr('y2', yy(tk)).attr('stroke', tk === 0 ? INK : GRID).attr('stroke-width', tk === 0 ? 1.5 : 1);
+        gy.append('text').attr('x', M.l - 6).attr('y', yy(tk)).attr('dy', '0.34em').attr('text-anchor', 'end').attr('font-size', 11).attr('fill', MUTED)
+          .style('font-variant-numeric', 'tabular-nums').text(tk + ' %');
+      }
+      const gxa = svg.append('g');
+      const plot = svg.append('g').attr('clip-path', `url(#${clipId})`);
+      const elecLine = future ? null : plot.append('line').attr('y1', M.t - 8).attr('y2', H - M.b).attr('stroke', INK).attr('stroke-width', 1.5);
+      const topLabel = svg.append('text').attr('y', M.t - 13).attr('text-anchor', 'end').attr('font-size', 11).attr('font-weight', 900).attr('fill', INK)
+        .text(future ? 'dernier sondage · ' + fDayS(S.lastT) : '1er tour · ' + fDayS(S.elec));
+
+      // points
+      const pts = [];
+      for (const r of shown) for (const c of vis) {
+        if (r.v[c] == null || r.t < x0) continue;
+        pts.push({r, c, py: yy(r.v[c]), px: 0});
+      }
+      const dots = plot.append('g').selectAll('circle').data(pts).join('circle').attr('cy', (d) => d.py).attr('r', narrow ? 2.2 : 2.7)
+        .attr('fill', (d) => ccol(d.c)).attr('fill-opacity', st.merge || st.curves.size ? 0.38 : 0.6);
+
+      const line = d3.line().x((d) => xz(d.t)).y((d) => yy(d.v)).curve(d3.curveMonotoneX);
+      const keep = (arr) => arr.filter((d) => d.t >= x0 && d.t <= xEndData);
+
+      // courbes par institut
+      const paths = [];
+      const gc = plot.append('g').attr('fill', 'none');
+      const labels = [];
+      for (const p of D.pollsters) {
+        if (!st.curves.has(p.name) || st.off.has(p.name)) continue;
+        const rs = shown.filter((r) => r.institut === p.name);
+        for (const c of vis) {
+          const cv = keep(smooth(perPoll(rs, c), 7, 0.5));
+          if (cv.length < 2) continue;
+          paths.push({cv, el: gc.append('path').attr('stroke', CREAM).attr('stroke-width', 3.5).attr('stroke-linecap', 'round')});
+          paths.push({cv, el: gc.append('path').attr('stroke', ccol(c)).attr('stroke-width', 1.7).attr('stroke-dasharray', p.dash)});
+          labels.push({t: cv[0].t, y: yy(cv[0].v), txt: p.name, col: p.color});
+        }
+      }
+      // courbe moyenne
+      const meanEnd = new Map();
+      if (st.merge) {
+        const gm = plot.append('g').attr('fill', 'none').attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+        for (const c of vis) {
+          const cv = keep(smooth(perPoll(shown, c), 5, 0.5));
+          if (cv.length < 2) continue;
+          paths.push({cv, el: gm.append('path').attr('stroke', CREAM).attr('stroke-width', 6.5).attr('stroke-opacity', 0.9)});
+          paths.push({cv, el: gm.append('path').attr('stroke', ccol(c)).attr('stroke-width', 3.2)});
+          meanEnd.set(c, cv[cv.length - 1]);
+        }
+      }
+      const gl = plot.append('g').attr('font-size', 10).attr('font-weight', 700);
+      const labEls = labels.map((l) => gl.append('text').attr('y', l.y).attr('dy', '0.34em').attr('fill', l.col)
+        .attr('stroke', CREAM).attr('stroke-width', 3).attr('paint-order', 'stroke').text(l.txt));
+
+      // résultat et moyenne de la dernière semaine (sur la ligne du 1er tour)
+      const items = S.items.filter((d) => vis.includes(d.c));
+      const gr = plot.append('g');
+      const gapEls = [], ringEls = [], resEls = [];
+      for (const d of items) {
+        if (!future && d.mean != null && d.res != null) gapEls.push(gr.append('line').attr('y1', yy(d.mean)).attr('y2', yy(d.res)).attr('stroke', ccol(d.c)).attr('stroke-width', 2));
+      }
+      for (const d of items) {
+        if (d.mean != null && !future) ringEls.push(gr.append('circle').attr('cy', yy(d.mean)).attr('r', 4.5).attr('fill', CREAM).attr('stroke', ccol(d.c)).attr('stroke-width', 2.2));
+      }
+      for (const d of items) {
+        if (d.res != null && !future) resEls.push(gr.append('circle').attr('cy', yy(d.res)).attr('r', 6).attr('fill', ccol(d.c)).attr('stroke', INK).attr('stroke-width', 1.6));
+      }
+
+      // encadrés à droite (fixes)
+      // 2027 : pas de rond creux ; à droite, le niveau actuel de la courbe moyenne (ou, sans courbe, la moyenne récente)
+      if (future) for (const d of items) {
+        const e = meanEnd.get(d.c);
+        d.cur = e && (S.lastT - e.t) / DAY <= RECENT_2027 ? e.v : d.mean;
+      }
+      const nCl = items.filter((d) => (future ? d.cur != null : (d.res != null || d.mean != null))).length;
+      const compact = nCl * (narrow ? 26 : 34) > (H - M.b - M.t);
+      const lh = compact ? (narrow ? 14 : 16) : (narrow ? 26 : 34);
+      const cl = items.map((d) => ({...d, ay: yy(future ? (d.cur != null ? d.cur : 0) : (d.res != null ? d.res : d.mean != null ? d.mean : 0))}))
+        .filter((d) => (future ? d.cur != null : (d.res != null || d.mean != null))).sort((a, b) => a.ay - b.ay);
+      cl.forEach((d) => { d.ly = d.ay; });
+      for (let it = 0; it < 4; it++) {
+        for (let i = 1; i < cl.length; i++) if (cl[i].ly - cl[i - 1].ly < lh) cl[i].ly = cl[i - 1].ly + lh;
+        const over = cl.length ? cl[cl.length - 1].ly - (H - M.b - 8) : 0;
+        if (over > 0) for (const d of cl) d.ly -= over;
+        for (let i = cl.length - 2; i >= 0; i--) if (cl[i + 1].ly - cl[i].ly < lh) cl[i].ly = cl[i + 1].ly - lh;
+        if (cl.length && cl[0].ly < M.t) { const sh = M.t - cl[0].ly; for (const d of cl) d.ly += sh; }
+      }
+      const gx = svg.append('g');
+      const tx0 = plotR + (narrow ? 16 : 22);
+      const conn = [];
+      for (const d of cl) {
+        conn.push({d, el: gx.append('path').attr('fill', 'none').attr('stroke', ccol(d.c)).attr('stroke-width', 1).attr('stroke-opacity', 0.7)});
+        if (compact) {
+          const t1 = gx.append('text').attr('x', tx0).attr('y', d.ly).attr('dy', '0.34em').attr('font-size', narrow ? 10 : 11.5).style('font-variant-numeric', 'tabular-nums');
+          t1.append('tspan').attr('font-weight', 900).attr('fill', ccol(d.c)).text(d.c);
+          const v = future ? f1(d.cur) : (d.res != null ? f1(d.res) : '—');
+          t1.append('tspan').attr('dx', 5).attr('font-weight', 700).attr('fill', INK).text(v);
+          if (!future && d.gap != null) t1.append('tspan').attr('dx', 5).attr('fill', Math.abs(d.gap) >= 2 ? '#b31d14' : MUTED).attr('font-weight', 700).text(fGap(d.gap));
+          continue;
+        }
+        const t = gx.append('text').attr('x', tx0).attr('y', d.ly - (narrow ? 2 : 4)).attr('font-size', narrow ? 11 : 13);
+        t.append('tspan').attr('font-weight', 900).attr('fill', ccol(d.c)).text(d.c);
+        if (!narrow && d.res != null) t.append('tspan').attr('dx', 6).attr('font-weight', 900).attr('fill', INK).text(f1(d.res) + ' %');
+        const s = gx.append('text').attr('x', tx0).attr('y', d.ly + (narrow ? 10 : 11)).attr('font-size', narrow ? 10 : 11).attr('fill', MUTED)
+          .style('font-variant-numeric', 'tabular-nums');
+        if (future) s.text((narrow ? '' : (st.merge ? 'courbe moyenne ' : 'sondages récents ')) + f1(d.cur) + ' %');
+        else if (narrow) s.text(d.res != null ? f1(d.res) + (d.gap != null ? ' · ' + fGap(d.gap) : '') : '—');
+        else {
+          s.append('tspan').text('sondages ' + (d.mean != null ? f1(d.mean) : '—'));
+          if (d.gap != null) s.append('tspan').attr('dx', 6).attr('font-weight', 900).attr('fill', Math.abs(d.gap) >= 2 ? '#b31d14' : INK).text('écart ' + fGap(d.gap));
+        }
+      }
+
+      // infobulle
+      const tip = document.createElement('div'); tip.className = 'sv-tip'; tip.hidden = true; el.append(tip);
+      const hl = svg.append('circle').attr('r', 5.5).attr('fill', 'none').attr('stroke', INK).attr('stroke-width', 2).style('display', 'none').attr('pointer-events', 'none');
+      const ov = svg.append('rect').attr('x', M.l).attr('y', M.t - 8).attr('width', Math.max(0, plotR - M.l + 8)).attr('height', H - M.b - M.t + 8)
+        .attr('fill', 'transparent').style('cursor', 'grab');
+      let del = null;
+      const hide = () => { tip.hidden = true; hl.style('display', 'none'); };
+
+      // placement selon l'échelle x courante (rejoué à chaque zoom)
+      const render = () => {
+        const xr = xz.range()[1];
+        const xe = future ? plotR : xz(S.elec);
+        const xeC = Math.min(xe, plotR);
+        if (band) band.attr('x', xz(new Date(+S.elec - LAST_WEEK * DAY))).attr('width', Math.max(0, xz(S.elec) - xz(new Date(+S.elec - LAST_WEEK * DAY))));
+        if (elecLine) elecLine.attr('x1', xe).attr('x2', xe);
+        topLabel.attr('x', future ? plotR : Math.min(xe, plotR)).attr('opacity', future || xe <= plotR + 1 ? 1 : 0.35);
+        // axe x : graduations adaptées au zoom
+        gxa.selectAll('*').remove();
+        const dom = xz.domain();
+        const nT = Math.max(3, Math.floor((plotR - M.l) / (narrow ? 90 : 72)));
+        const tks = xz.ticks(nT).filter((d) => d >= dom[0] && d <= dom[1]);
+        for (const tk of tks) {
+          const isMonth = tk.getUTCDate() === 1;
+          gxa.append('line').attr('x1', xz(tk)).attr('x2', xz(tk)).attr('y1', H - M.b).attr('y2', H - M.b + 5).attr('stroke', INK);
+          gxa.append('text').attr('x', xz(tk)).attr('y', H - M.b + 17).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', MUTED)
+            .text(isMonth ? (tk.getUTCMonth() === 0 ? fMonY(tk) : fMon(tk)) : fDayS(tk));
+        }
+        for (const d of pts) d.px = xz(d.r.t);
+        dots.attr('cx', (d) => d.px);
+        for (const p of paths) p.el.attr('d', line(p.cv));
+        labels.forEach((l, i) => {
+          const lx = xz(l.t), left = lx - 4 > M.l + 40;
+          labEls[i].attr('x', left ? lx - 4 : lx + 4).attr('text-anchor', left ? 'end' : 'start');
+        });
+        for (const e of gapEls) e.attr('x1', xe).attr('x2', xe);
+        for (const e of ringEls) e.attr('cx', xe);
+        for (const e of resEls) e.attr('cx', xe);
+        for (const {d, el: c} of conn) c.attr('d', `M${xeC + 7},${d.ay} C${xeC + 13},${d.ay} ${tx0 - 7},${d.ly} ${tx0 - 2},${d.ly}`);
+        del = null; hide();
+        void xr;
+      };
+
+      ov.on('pointerleave', hide).on('pointermove', (ev) => {
+        if (!pts.length || ev.buttons) return hide();
+        const [mx, my] = d3.pointer(ev, svg.node());
+        const sc = W / (svg.node().getBoundingClientRect().width || W);
+        const vp = pts.filter((d) => d.px >= M.l && d.px <= plotR + 2);
+        if (!del) { del = {vp, dl: d3.Delaunay.from(vp, (d) => d.px, (d) => d.py)}; }
+        if (!del.vp.length) return hide();
+        const d = del.vp[del.dl.find(mx, my)];
+        if (!d || Math.hypot(d.px - mx, d.py - my) > 28 * sc) return hide();
+        hl.style('display', null).attr('cx', d.px).attr('cy', d.py).attr('stroke', ccol(d.c));
+        const p = D.pmap.get(d.r.institut);
+        tip.replaceChildren();
+        const dd = document.createElement('div'); dd.className = 'd'; dd.textContent = fDay(d.r.t) + (d.r.terrain ? ' · terrain ' + d.r.terrain : ''); tip.append(dd);
+        const pp = document.createElement('div'); pp.className = 'p'; const pi = document.createElement('i'); pi.style.background = p ? p.color : MUTED;
+        pp.append(pi, document.createTextNode(d.r.institut + ' · hypothèse ' + d.r.hyp)); tip.append(pp);
+        const vals = vis.filter((c) => d.r.v[c] != null).sort((a, b) => d.r.v[b] - d.r.v[a]);
+        for (const c of vals) {
+          const rr = document.createElement('div'); rr.className = 'r' + (c === d.c ? ' on' : '');
+          const ci = document.createElement('i'); ci.style.background = ccol(c);
+          const a = document.createElement('span'); a.textContent = c;
+          const b = document.createElement('span'); b.textContent = f0(d.r.v[c]) + ' %';
+          rr.append(ci, a, b); tip.append(rr);
+        }
+        tip.hidden = false;
+        const bw = el.clientWidth, bx = d.px / sc + 6, by = d.py / sc + 6;
+        const tw = tip.offsetWidth, th = tip.offsetHeight;
+        tip.style.left = Math.max(4, Math.min(bw - tw - 4, bx + 14)) + 'px';
+        tip.style.top = Math.max(4, by - th - 12 < 4 ? by + 14 : by - th - 12) + 'px';
+      });
+
+      // zoom horizontal : glisser pour se déplacer ; molette en plein écran ou avec Ctrl ; double-clic pour zoomer
+      const zoom = d3.zoom().scaleExtent([1, 40])
+        .extent([[M.l, 0], [plotR, H]]).translateExtent([[M.l, 0], [plotR, H]])
+        .filter((ev) => (ev.type === 'wheel' ? (ev.ctrlKey || ev.metaKey || !!el.closest('.is-full')) : !ev.button))
+        .on('start', () => ov.style('cursor', 'grabbing'))
+        .on('end', () => ov.style('cursor', 'grab'))
+        .on('zoom', (ev) => { st.zt = ev.transform; xz = ev.transform.rescaleX(xBase); render(); });
+      ov.call(zoom);
+      window.SVZOOM = window.SVZOOM || {};
+      window.SVZOOM[y] = {
+        by: (k) => ov.transition().duration(250).call(zoom.scaleBy, k, [plotR - (plotR - M.l) * 0.15, H / 2]),
+        reset: () => ov.transition().duration(250).call(zoom.transform, d3.zoomIdentity),
+      };
+      ov.call(zoom.transform, st.zt || d3.zoomIdentity);
+    });
+  }
+})();
+</script>
+
+</div>
+<script>dash._start(); window.scrollTo(0, 0); addEventListener('load', () => window.scrollTo(0, 0));</script>
+<script>
+(() => {
+  const m = document.getElementById('bienvenue');
+  if (!m) return;
+  const last = document.activeElement;
+  const close = () => { m.hidden = true; document.documentElement.style.overflow = ''; if (last && last.focus) last.focus(); };
+  document.documentElement.style.overflow = 'hidden';
+  for (const b of m.querySelectorAll('[data-close]')) b.addEventListener('click', close);
+  m.addEventListener('click', (e) => { if (e.target === m) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !m.hidden) { e.stopPropagation(); close(); } }, true);
+  const x = m.querySelector('.sv-modal-x'); if (x) setTimeout(() => x.focus(), 50);
+})();
+</script>
+</body>
+</html>
