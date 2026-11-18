@@ -6,7 +6,7 @@ const {DOMParser} = require('linkedom');
 const {parseWikiPolls} = require('./parse-wiki.js');
 
 const PAGE = "Liste_de_sondages_sur_l'élection_présidentielle_française_de_2027";
-const ELECTION = '2027-04-11';          // 1er tour supposé (date pas encore fixée officiellement)
+const ELECTION = '2027-04-18';          // date du premier tour 2027
 const MIN_HYP = 5;                      // un candidat doit être testé au moins 5 fois pour avoir sa colonne
 const OUT = path.join(__dirname, '..', 'site', 'data', 'sondages_2027.json');
 const META = ['date', 'terrain', 'institut', 'hypothese'];
