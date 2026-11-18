@@ -1,32 +1,38 @@
-name: Mise à jour des sondages 2027
+name: Mise à jour et publication du site
 
 on:
   schedule:
     - cron: '17 5,11,17,23 * * *'   # 4 fois par jour (heures UTC)
   workflow_dispatch: {}              # bouton « Run workflow » pour lancer à la main
+  push:
+    branches: [main]                 # republie le site quand tu modifies un fichier
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: mise-a-jour
   cancel-in-progress: false
 
 jobs:
-  update:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
       - run: npm ci
       - name: Test du lecteur de tableaux
         run: npm test
       - name: Lecture de Wikipédia et contrôles
+        if: github.event_name != 'push'
         run: npm run update
-      - name: Publication si nouveaux sondages
+      - name: Enregistrement des nouveaux sondages
+        if: github.event_name != 'push'
         run: |
           if git diff --quiet; then echo "Rien de nouveau."; exit 0; fi
           git config user.name "robot-sondages"
@@ -34,3 +40,17 @@ jobs:
           git add site/data/sondages_2027.json
           git commit -m "Sondages 2027 : mise à jour automatique"
           git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
