@@ -9,27 +9,172 @@
 <meta property="og:description" content="Un an de sondages avant chaque présidentielle, comparés aux résultats du premier tour.">
 <link rel="stylesheet" href="assets/fonts.css">
 <style>
-html,body{margin:0;background:#f3eee2}
-body{padding:clamp(8px,2.5vw,32px)}
-.sv-wrap{max-width:1440px;margin:0 auto}
-.dash-skeleton:empty{background:linear-gradient(90deg,#f6f1e4,#efe8d6,#f6f1e4)}
-.sv-modal{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(33,35,32,.55);backdrop-filter:blur(2px);animation:svfade .25s ease-out}
+/* Charte inspirée de Jarod : blanc et noir, accent vert fluo, Montserrat, pilules, bordures franches. */
+:root{--ink:#000;--ink2:#2D2D2F;--muted:#66666A;--muted2:#48484B;--line:#D9D9D6;--line2:#ECECEA;--soft:#F6F6F5;
+  --green:#33FF59;--green-soft:#E3FFE8;--red:#D42A47;--blue:#3357FF;--yellow-soft:#FFF3CC;
+  --font:'Montserrat','Helvetica Neue',Arial,sans-serif}
+html,body{margin:0;background:#fff;color:var(--ink)}
+body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
+.sv-wrap{max-width:1240px;margin:0 auto;padding:clamp(14px,3vw,40px) clamp(14px,3vw,40px) 40px;box-sizing:border-box}
+.sv{display:flex;flex-direction:column;gap:22px;font-family:var(--font)}
+.sv [hidden]{display:none!important}
+.sv button,.sv input,.sv summary{font-family:var(--font)}
+.sv button:focus-visible,.sv input:focus-visible,.sv summary:focus-visible,.sv-modal button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* En-tête */
+.sv-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;border-bottom:3px solid var(--ink);padding-bottom:14px}
+.sv-head h1{margin:0;font-weight:900;font-size:clamp(32px,6vw,68px);line-height:1;letter-spacing:-0.02em;text-transform:uppercase;display:flex;flex-wrap:wrap;align-items:center;gap:0 .22em}
+.vs{display:inline-block;background:var(--green);color:var(--ink);border-radius:999px;padding:.08em .38em .1em;font-size:.6em;line-height:1;letter-spacing:0}
+.sv-kicker{margin:0;font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);padding-bottom:6px}
+.sv-kicker sup{font-size:.7em}
+.star{color:var(--ink);margin:0 .25em}
+
+/* Onglets */
+.sv-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.sv-tabs button{font-weight:800;font-size:clamp(17px,2.4vw,22px);line-height:1;padding:11px 24px;border:2px solid var(--ink);border-radius:999px;background:#fff;color:var(--ink);cursor:pointer;transition:background .15s}
+.sv-tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
+.sv-tabs button:hover:not([aria-selected="true"]){background:var(--green-soft)}
+
+/* Section */
+.sv-page{display:flex;flex-direction:column;gap:14px;container-type:inline-size}
+.sv-sechead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px}
+.sv-pill{background:var(--ink);color:#fff;padding:5px 13px;border-radius:999px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.sv-take{margin:0;font-size:15px;line-height:1.5;flex:1;min-width:260px}
+.sv-take b{font-weight:800}
+.sv-take .dir{font-weight:600;white-space:nowrap}
+.gapdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.sv-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,300px);gap:20px;align-items:start}
+.sv-main{position:sticky;top:8px;display:flex;flex-direction:column;gap:10px;min-width:0;background:#fff}
+.sv-side{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* Candidats + outils */
+.sv-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px}
+.sv-cands{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.sv-cands button{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:13px;background:#fff;border:1.5px solid var(--line);color:var(--ink);border-radius:999px;padding:5px 12px 5px 9px;cursor:pointer;white-space:nowrap}
+.sv-cands button:hover{border-color:var(--ink)}
+.sv-cands .sv-quick{background:var(--ink);color:#fff;border-color:var(--ink);padding:5px 13px}
+.sv-cands .sv-quick:hover{background:var(--ink2)}
+.sv-cands button i{width:11px;height:11px;border-radius:50%;background:var(--cc);flex:none}
+.sv-cands button[aria-pressed="false"]{color:var(--muted);background:#fff}
+.sv-cands button[aria-pressed="false"] i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--cc)}
+.sv-tools{display:flex;gap:6px;margin-left:auto}
+.sv-tools button{font-weight:700;font-size:13px;background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:999px;padding:5px 13px;cursor:pointer;min-width:34px}
+.sv-tools button:hover{background:var(--green-soft)}
+.sv-tools .sv-fullbtn{background:var(--ink);color:#fff}
+.sv-tools .sv-fullbtn:hover{background:var(--ink2)}
+
+/* Graphique */
+.sv-chart{position:relative;min-height:280px;background:#fff;border:2px solid var(--ink);border-radius:18px;padding:8px 6px 2px;overflow:hidden}
+.sv-chart svg{display:block;font-family:var(--font)}
+.dash-skeleton:empty{background:linear-gradient(90deg,var(--soft),var(--line2),var(--soft))}
+.sv-tip{position:absolute;pointer-events:none;background:#fff;border:2px solid var(--ink);border-radius:14px;box-shadow:0 10px 26px rgba(0,0,0,.16);padding:8px 11px;font-size:12px;line-height:1.45;min-width:180px;z-index:2}
+.sv-tip .d{color:var(--muted)}
+.sv-tip .p{font-weight:800;display:flex;align-items:center;gap:6px}
+.sv-tip .r{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.sv-tip .r.on{font-weight:800}
+.sv-tip .r i,.sv-tip .p i{width:9px;height:9px;border-radius:50%;flex:none}
+.sv-tip .r span:last-child{margin-left:auto;padding-left:12px}
+.sv-fail{display:flex;align-items:center;justify-content:center;gap:8px;min-height:260px;color:var(--muted);font-size:13px}
+.sv-fail::before{content:'';width:.4rem;height:.4rem;border-radius:50%;background:var(--red)}
+.sv-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;font-size:12px;color:var(--muted2)}
+.sv-legend span{display:inline-flex;align-items:center;gap:7px}
+.sv-legend .sv-legend-def{display:block;flex-basis:100%;color:var(--muted)}
+.sv-legend b{color:var(--ink);font-weight:700}
+.sv-help{margin:0;font-size:11px;color:var(--muted)}
+
+/* Fusion (interrupteur) */
+.sv-merge{display:flex;gap:12px;align-items:center;cursor:pointer;background:var(--green-soft);border:2px solid var(--ink);border-radius:999px;padding:9px 18px 9px 12px}
+.sv-merge input{position:absolute;opacity:0;width:1px;height:1px}
+.sv-switch{flex:none;position:relative;width:44px;height:26px;border-radius:999px;background:#fff;border:2px solid var(--ink);box-sizing:border-box;margin-top:1px;transition:background .15s}
+.sv-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--ink);transition:transform .15s}
+.sv-merge input:checked + .sv-switch{background:var(--green)}
+.sv-merge input:checked + .sv-switch::after{transform:translateX(18px)}
+.sv-merge input:focus-visible + .sv-switch{outline:2px solid var(--blue);outline-offset:2px}
+.sv-merge b{font-weight:800;font-size:14px;line-height:1.25;margin-right:8px}
+.sv-merge small{font-size:12px;color:var(--muted2);line-height:1.4}
+
+/* Instituts */
+.sv-inst{border:1.5px solid var(--line);border-radius:18px;padding:12px 12px 12px}
+.sv-inst summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:8px;font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.sv-inst summary::-webkit-details-marker{display:none}
+.sv-inst summary::after{content:'▾';margin-left:auto;font-size:13px;transition:transform .15s}
+.sv-inst:not([open]) summary::after{transform:rotate(-90deg)}
+.sv-inst-hint{font-weight:600;font-size:11px;letter-spacing:0;text-transform:none;color:var(--muted)}
+.sv-h{display:flex;gap:6px;margin:10px 0 8px}
+.sv-h button{font-weight:700;font-size:12px;background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:999px;padding:4px 11px;cursor:pointer}
+.sv-h button:hover{background:var(--green-soft)}
+.sv-chips{display:flex;flex-direction:column;gap:5px}
+.sv-chip{display:flex;align-items:stretch;border:1.5px solid var(--line2);border-left:5px solid var(--pc);border-radius:12px;background:#fff;overflow:hidden}
+.sv-chip.is-off{border-left-color:var(--line);opacity:.55}
+.sv-chip label{display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 7px;font-size:12px}
+.sv-chip input{accent-color:var(--ink);margin:0;width:15px;height:15px;flex:none}
+.sv-pts{font-weight:700;flex:1;min-width:0}
+.sv-pts span:not(.sv-n){overflow-wrap:normal;word-break:normal;hyphens:none;line-height:1.2}
+.sv-pts svg{flex:none}
+.sv-pts .sv-n{margin-left:auto;font-size:11px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sv-crv{border-left:1px dashed var(--line);font-size:11px;color:var(--muted);flex:none}
+.sv-crv svg{flex:none}
+.sv-crv.is-disabled{cursor:not-allowed;opacity:.45}
+
+/* Plein écran */
+.sv-grid.is-full{position:fixed;inset:0;z-index:2147483000;background:#fff;padding:16px 20px;overflow:auto;grid-template-columns:minmax(0,1fr) minmax(240px,280px)}
+.sv-grid.is-full .sv-main{position:static}
+.sv-grid.is-full .sv-side{max-height:calc(100vh - 32px);overflow:auto}
+
+/* Pied de page */
+.sv-foot{border-top:2px solid var(--ink);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.sv-note{margin:0;font-size:11px;line-height:1.5;color:var(--muted)}
+.sv-method summary{cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1.5px solid var(--ink);border-radius:999px;padding:4px 12px;list-style:none}
+.sv-method summary::-webkit-details-marker{display:none}
+.sv-method summary::after{content:'+';font-size:13px;line-height:1}
+.sv-method[open] summary::after{content:'−'}
+.sv-method ul{margin:10px 0 0;padding-left:18px;font-size:11px;line-height:1.55;color:var(--muted2);max-width:880px}
+.sv-method li{margin:3px 0}
+.sv-method b{color:var(--ink);font-weight:700}
+
+/* Fenêtre d'accueil */
+.sv-modal{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.55);animation:svfade .2s ease-out;font-family:var(--font)}
 .sv-modal[hidden]{display:none}
 @keyframes svfade{from{opacity:0}to{opacity:1}}
-.sv-modal-box{position:relative;max-width:620px;width:100%;max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box;background:#fffcf4;color:#212320;border:3px solid #212320;border-radius:16px;padding:clamp(22px,4vw,38px);font-family:'Public Sans',Arial,sans-serif;font-weight:500;box-shadow:0 18px 50px rgba(33,35,32,.35)}
-.sv-modal-x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:2px solid #212320;background:#fff;color:#212320;font:700 22px/1 'Public Sans',Arial,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.sv-modal-x:hover{background:#fef7d9}
-.sv-modal-x:focus-visible,.sv-modal-go:focus-visible{outline:3px solid #f9c900;outline-offset:2px}
-.sv-modal-kick{margin:0 0 6px;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#6b675e}
-.sv-modal h2{margin:0 0 16px;padding-right:40px;font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:clamp(30px,6vw,46px);line-height:1;text-transform:uppercase}
-.sv-modal h2 .vs{font-size:.74em;background:#f9c900;padding:0 .16em;position:relative;top:.06em}
-.sv-modal h2 .res{color:#d1271c}
-.sv-modal p{margin:0 0 12px;font-size:15.5px;line-height:1.55}
-.sv-modal ul{margin:4px 0 16px;padding-left:20px;font-size:14.5px;line-height:1.5}
+.sv-modal-box{position:relative;max-width:620px;width:100%;max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:24px;padding:clamp(22px,4vw,38px);font-weight:500}
+.sv-modal-x{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);background:#fff;color:var(--ink);font:700 22px/1 var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sv-modal-x:hover{background:var(--green)}
+.sv-modal-kick{margin:0 0 6px;font-weight:700;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2)}
+.sv-modal h2{margin:0 0 16px;padding-right:44px;font-weight:900;font-size:clamp(28px,5.5vw,42px);line-height:1.02;letter-spacing:-0.02em;text-transform:uppercase}
+.sv-modal p{margin:0 0 12px;font-size:15px;line-height:1.55}
+.sv-modal ul{margin:4px 0 16px;padding-left:20px;font-size:14px;line-height:1.5}
 .sv-modal li{margin:4px 0}
-.sv-modal .src{font-size:12.5px;color:#6b675e}
-.sv-modal-go{display:inline-block;margin-top:6px;font:900 15px 'Public Sans',Arial,sans-serif;background:#212320;color:#fffcf4;border:none;border-radius:999px;padding:12px 22px;cursor:pointer}
-.sv-modal-go:hover{background:#3a3c37}
+.sv-modal .src{font-size:12px;color:var(--muted)}
+.sv-modal-go{display:inline-block;margin-top:6px;font:800 15px var(--font);background:var(--ink);color:#fff;border:2px solid var(--ink);border-radius:999px;padding:12px 24px;cursor:pointer}
+.sv-modal-go:hover{background:var(--green);color:var(--ink)}
+
+/* Téléphone et colonnes étroites */
+@container (max-width:720px){
+  .sv-merge{border-radius:18px;align-items:flex-start}
+  .sv-merge b{display:block}
+  .sv-merge small{display:block;margin-top:2px}
+  .sv-grid{grid-template-columns:minmax(0,1fr)}
+  .sv-main{position:static}
+  .sv-bar{flex-direction:column;align-items:stretch}
+  .sv-cands{flex-wrap:nowrap;overflow-x:auto;min-width:0;width:100%;max-width:100%;box-sizing:border-box;padding-bottom:4px;margin:0 -2px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  .sv-cands button{flex:none}
+  .sv-tools{margin-left:0}
+  .sv-tools .sv-zbtn{display:none}
+  .sv-chart{border-radius:14px;padding:6px 2px 2px}
+  .sv-legend{font-size:11px;gap:4px 12px}
+  .sv-take{font-size:14px;min-width:0;flex-basis:100%}
+  .sv-sechead{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:600px){
+  .sv-head h1{font-size:34px}
+  .sv-kicker{font-size:10.5px;letter-spacing:.08em}
+  .sv-tabs{gap:6px}
+  .sv-tabs button{padding:9px 16px;font-size:17px}
+  .sv-modal-howto{display:none}
+  .sv-modal p{font-size:14px}
+  .sv-modal-box{border-radius:20px}
+}
+
 </style>
 <script>try { history.scrollRestoration = 'manual'; } catch (e) {}</script>
 <script src="assets/d3.min.js"></script>
@@ -40,10 +185,10 @@ body{padding:clamp(8px,2.5vw,32px)}
   <div class="sv-modal-box">
     <button type="button" class="sv-modal-x" data-close aria-label="Fermer">×</button>
     <p class="sv-modal-kick">Présentation</p>
-    <h2 id="bienvenue-titre">Sondages <span class="vs">vs</span> <span class="res">résultats</span></h2>
+    <h2 id="bienvenue-titre">Sondages <span class="vs">vs</span> résultats</h2>
     <p>Cette plateforme recense les intentions de vote au premier tour de l'élection présidentielle publiées depuis 2012. Pour chaque scrutin (2012, 2017, 2022), elle couvre les douze mois qui précèdent le vote et met en regard les estimations des instituts et les résultats officiels du premier tour.</p>
     <p>Pour 2027, les données portent sur les enquêtes publiées depuis avril 2026 et sont actualisées à mesure que de nouveaux sondages paraissent.</p>
-    <ul>
+    <ul class="sv-modal-howto">
       <li>Chaque point correspond à une hypothèse testée dans un sondage ; la courbe en donne une moyenne lissée.</li>
       <li>Le point plein indique le score obtenu au premier tour, le cercle vide la moyenne des sondages réalisés dans les sept derniers jours de la campagne. L'écart entre les deux figure à droite du graphique.</li>
       <li>Les onglets permettent de changer de scrutin. On peut filtrer par institut, ajouter ou retirer des candidats, zoomer et passer en plein écran.</li>
@@ -52,88 +197,12 @@ body{padding:clamp(8px,2.5vw,32px)}
     <button type="button" class="sv-modal-go" data-close>Accéder aux graphiques</button>
   </div>
 </div>
-<div class="sv-wrap">
-<style>
-.sv{--ink:#212320;--cream:#fffcf4;--muted:#6b675e;--line:#e6dfcc;--band:#fef7d9;--yel:#f9c900;--red:#d1271c;
-  background:var(--cream);color:var(--ink);font-family:'Public Sans',Arial,sans-serif;font-weight:500;
-  border:3px solid var(--ink);border-radius:14px;padding:clamp(14px,3vw,32px);display:flex;flex-direction:column;gap:18px}
-.sv-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;border-bottom:5px solid var(--ink);padding-bottom:12px}
-.sv-head h1{margin:0;font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:clamp(34px,6vw,64px);line-height:1;text-transform:uppercase;color:var(--ink);display:flex;flex-wrap:wrap;align-items:baseline;gap:0 .22em}
-.sv-head .vs{font-size:.74em;background:var(--yel);padding:0 .16em;position:relative;top:.1em}
-.sv-head .res{color:var(--red)}
-.sv-kicker{margin:0;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-bottom:6px}
-.sv-tabs{display:flex;flex-wrap:wrap;gap:8px}
-.sv-tabs button{font-family:'Anton',Impact,sans-serif;font-size:clamp(20px,3vw,28px);line-height:1;padding:10px 22px 9px;border:3px solid var(--ink);border-radius:999px;background:transparent;color:var(--ink);cursor:pointer;letter-spacing:.02em}
-.sv-tabs button[aria-selected="true"]{background:var(--ink);color:var(--cream)}
-.sv-tabs button:hover:not([aria-selected="true"]){background:var(--band)}
-.sv-tabs button:focus-visible,.sv button:focus-visible,.sv input:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
-.sv-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;font-size:13px;color:var(--muted)}
-.sv-legend span{display:inline-flex;align-items:center;gap:7px}
-.sv-page{display:flex;flex-direction:column;gap:12px;container-type:inline-size}
-.sv-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,270px);gap:16px;align-items:start}
-.sv-main{position:sticky;top:8px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.sv-side{display:flex;flex-direction:column;gap:10px;min-width:0}
-@container (max-width:700px){.sv-grid{grid-template-columns:minmax(0,1fr)}.sv-main{top:0;z-index:3;background:var(--cream);padding-bottom:8px;box-shadow:0 8px 10px -8px rgba(33,35,32,.25)}}
-.sv-pill{background:var(--ink);color:var(--cream);padding:4px 12px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-right:6px;white-space:nowrap}
-.sv-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:4px 0 0;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.sv-h button{font:700 12px 'Public Sans',Arial,sans-serif;letter-spacing:0;text-transform:none;background:transparent;border:1.5px solid var(--ink);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
-.sv-h button:first-of-type{margin-left:auto}
-.sv-h button:hover{background:var(--band)}
-.sv-chips{display:flex;flex-direction:column;gap:5px}
-.sv-chip{display:flex;align-items:stretch;border:1.5px solid var(--line);border-left:5px solid var(--pc);border-radius:8px;background:#fff;overflow:hidden}
-.sv-chip.is-off{border-left-color:var(--line);opacity:.6}
-.sv-chip label{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;font-size:13px}
-.sv-chip input{accent-color:var(--pc);margin:0;width:15px;height:15px;flex:none}
-.sv-pts{font-weight:700;flex:1;min-width:0}
-.sv-pts span:not(.sv-n){overflow-wrap:anywhere;line-height:1.2}
-.sv-pts svg{flex:none}
-.sv-pts .sv-n{margin-left:auto;font-size:11px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.sv-crv{border-left:1px dashed var(--line);font-size:11px;color:var(--muted);flex:none}
-.sv-crv svg{flex:none}
-.sv-crv.is-disabled{cursor:not-allowed;opacity:.45}
-.sv-merge{display:flex;gap:12px;align-items:flex-start;cursor:pointer;background:var(--band);border:2px solid var(--ink);border-radius:12px;padding:12px 14px}
-.sv-merge input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ink);flex:none}
-.sv-merge b{display:block;font-weight:900;font-size:15px;line-height:1.2}
-.sv-merge small{display:block;font-size:12px;color:var(--muted);margin-top:3px}
-.sv-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px}
-.sv-tools{display:flex;gap:6px;margin-left:auto}
-.sv-tools button{font:700 13px 'Public Sans',Arial,sans-serif;background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer;min-width:32px}
-.sv-tools button:hover{background:var(--band)}
-.sv-tools .sv-fullbtn{background:var(--ink);color:var(--cream)}
-.sv-tools .sv-fullbtn:hover{background:#3a3c37}
-.sv-help{margin:0;font-size:11.5px;color:var(--muted)}
-.sv-grid.is-full{position:fixed;inset:0;z-index:2147483000;background:var(--cream);padding:16px 20px;overflow:auto;grid-template-columns:minmax(0,1fr) minmax(230px,270px);font-family:'Public Sans',Arial,sans-serif;color:var(--ink);--ink:#212320;--cream:#fffcf4;--muted:#6b675e;--line:#e6dfcc;--band:#fef7d9;--yel:#f9c900}
-.sv-grid.is-full .sv-main{position:static}
-.sv-grid.is-full .sv-side{max-height:calc(100vh - 32px);overflow:auto}
-.sv-cands{display:flex;flex-wrap:wrap;gap:6px}
-.sv-cands button{display:inline-flex;align-items:center;gap:7px;font:700 13px 'Public Sans',Arial,sans-serif;background:#fff;border:1.5px solid var(--line);color:var(--ink);border-radius:999px;padding:4px 12px 4px 8px;cursor:pointer}
-.sv-cands .sv-quick{background:var(--ink);color:var(--cream);border-color:var(--ink);padding:4px 12px}
-.sv-cands .sv-quick:hover{background:#3a3c37}
-.sv-cands button i{width:11px;height:11px;border-radius:50%;background:var(--cc)}
-.sv-cands button[aria-pressed="false"]{color:var(--muted);text-decoration:line-through;background:transparent}
-.sv-cands button[aria-pressed="false"] i{background:transparent;border:1.5px solid var(--cc)}
-.sv-take{margin:0;font-size:15px;line-height:1.9}
-.sv-take b{font-weight:900}
-.sv-chart{position:relative;min-height:280px;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:6px 6px 2px}
-.sv-chart svg{display:block;font-family:'Public Sans',Arial,sans-serif}
-.sv-tip{position:absolute;pointer-events:none;background:#fff;border:1.5px solid var(--ink);border-radius:8px;box-shadow:0 6px 18px rgba(33,35,32,.18);padding:7px 10px;font-size:12px;line-height:1.45;min-width:170px;z-index:2}
-.sv-tip .d{color:var(--muted)}
-.sv-tip .p{font-weight:900;display:flex;align-items:center;gap:6px}
-.sv-tip .r{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
-.sv-tip .r.on{font-weight:900}
-.sv-tip .r i,.sv-tip .p i{width:9px;height:9px;border-radius:50%;flex:none}
-.sv-tip .r span:last-child{margin-left:auto;padding-left:12px}
-.sv-fail{display:flex;align-items:center;justify-content:center;gap:8px;min-height:320px;color:var(--muted);font-size:13px}
-.sv-fail::before{content:'';width:.375rem;height:.375rem;border-radius:50%;background:var(--red)}
-.sv-note{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
-.sv [data-dash-source-state=refreshing]{opacity:.5}
-.sv [hidden]{display:none!important}
-</style>
 
+<div class="sv-wrap">
 <div class="sv">
   <header class="sv-head">
-    <h1 id="titre">Sondages <span class="vs">vs</span> <span class="res">résultats</span></h1>
-    <p class="sv-kicker">Présidentielles, 1er tour · un an de sondages</p>
+    <h1 id="titre">Sondages <span class="vs">vs</span> résultats</h1>
+    <p class="sv-kicker">Présidentielles <span class="star">★</span> 1<sup>er</sup> tour <span class="star">★</span> un an de sondages</p>
   </header>
 
   <nav class="sv-tabs" role="tablist" aria-label="Élection">
@@ -143,112 +212,189 @@ body{padding:clamp(8px,2.5vw,32px)}
     <button role="tab" data-tab="2027" aria-selected="false">2027</button>
   </nav>
 
-  <div class="sv-legend" aria-label="Légende">
-    <span><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3" fill="#6b675e" fill-opacity="0.5"></circle></svg>un sondage</span>
-    <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#6b675e" stroke-width="3" stroke-linecap="round"></line></svg>courbe moyenne</span>
-    <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#6b675e" stroke-width="1.6" stroke-dasharray="5 3"></line></svg>courbe d'un institut</span>
-    <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="#6b675e" stroke="#212320" stroke-width="1.5"></circle></svg>résultat réel</span>
-    <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="#fffcf4" stroke="#6b675e" stroke-width="2"></circle></svg>moyenne des sondages de la dernière semaine</span>
-    <span><svg width="16" height="12" aria-hidden="true"><rect x="0" y="0" width="16" height="12" rx="2" fill="#fef7d9" stroke="#e8d27a"></rect></svg>dernière semaine</span>
-  </div>
-
   <section class="sv-page" id="p2012" data-year="2012" hidden>
-    <p class="sv-take"><span class="sv-pill">Présidentielle 2012</span> Plus gros écart entre la dernière semaine de sondages et le résultat (parmi les candidats affichés) : <b data-draw="gap2012" data-source="s2012 resultats">—</b></p>
+    <div class="sv-sechead">
+      <span class="sv-pill">Présidentielle 2012</span>
+      <p class="sv-take" data-draw="gap2012" data-source="s2012 resultats">—</p>
+    </div>
     <div class="sv-grid">
       <div class="sv-main">
+        <label class="sv-merge">
+          <input type="checkbox" role="switch" data-merge="2012" checked>
+          <span class="sv-switch" aria-hidden="true"></span>
+          <span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span>
+        </label>
         <div class="sv-bar">
           <div class="sv-cands" data-draw="cands2012" data-source="s2012 resultats">—</div>
           <div class="sv-tools" role="group" aria-label="Zoom du graphique">
-            <button type="button" data-zoomin="2012" aria-label="Zoomer" title="Zoomer">+</button>
-            <button type="button" data-zoomout="2012" aria-label="Dézoomer" title="Dézoomer">−</button>
+            <button type="button" class="sv-zbtn" data-zoomin="2012" aria-label="Zoomer" title="Zoomer">+</button>
+            <button type="button" class="sv-zbtn" data-zoomout="2012" aria-label="Dézoomer" title="Dézoomer">−</button>
             <button type="button" data-zoomreset="2012">Vue complète</button>
             <button type="button" class="sv-fullbtn" data-full="2012"><span class="sv-go">⤢ Plein écran</span><span class="sv-quit" hidden>✕ Quitter</span></button>
           </div>
         </div>
         <div class="sv-chart dash-skeleton" data-draw="chart2012" data-source="s2012 resultats"></div>
-        <p class="sv-help">Glisser pour se déplacer dans le temps · double-clic, boutons +/− ou Ctrl + molette pour zoomer (molette seule en plein écran) · Échap pour quitter le plein écran.</p>
+      <div class="sv-legend" aria-label="Légende">
+        <span><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="#66666A" fill-opacity="0.5"></circle></svg>un sondage</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="3" stroke-linecap="round"></line></svg>courbe moyenne</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="1.6" stroke-dasharray="5 3"></line></svg>courbe d'un institut</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="#66666A" stroke="#000" stroke-width="1.5"></circle></svg>résultat réel</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="#fff" stroke="#66666A" stroke-width="2"></circle></svg>moyenne des sondages de la dernière semaine avant l'élection</span>
+        <span><svg width="16" height="12" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="11" rx="2" fill="#FFF3CC" stroke="#E6C65C"></rect></svg>dernière semaine avant l'élection</span>
+        <span class="sv-legend-def"><i class="gapdot" style="background:#FFCC33"></i><b>sous-estimé</b> : les sondages lui donnaient moins que son score réel ; <i class="gapdot" style="background:#3357FF"></i><b>surestimé</b> : plus.</span>
+      </div>
+        <p class="sv-help">Survolez ou touchez un point pour voir le sondage. Zoom : boutons + / −, double-clic, Ctrl + molette ou deux doigts sur téléphone ; glisser pour se déplacer dans le temps.</p>
       </div>
       <aside class="sv-side" aria-label="Réglages 2012">
-        <label class="sv-merge"><input type="checkbox" data-merge="2012" checked><span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span></label>
-        <p class="sv-h">Instituts <button data-all="2012">Tout cocher</button><button data-none="2012">Aucun</button></p>
-        <div class="sv-chips" data-draw="chips2012" data-source="s2012">—</div>
+        <details class="sv-inst" data-inst>
+          <summary><span>Instituts</span><span class="sv-inst-hint">filtrer, courbes par institut</span></summary>
+          <p class="sv-h"><button data-all="2012">Tout cocher</button><button data-none="2012">Aucun</button></p>
+          <div class="sv-chips" data-draw="chips2012" data-source="s2012">—</div>
+        </details>
       </aside>
     </div>
   </section>
 
   <section class="sv-page" id="p2017" data-year="2017" hidden>
-    <p class="sv-take"><span class="sv-pill">Présidentielle 2017</span> Plus gros écart entre la dernière semaine de sondages et le résultat (parmi les candidats affichés) : <b data-draw="gap2017" data-source="s2017 resultats">—</b></p>
+    <div class="sv-sechead">
+      <span class="sv-pill">Présidentielle 2017</span>
+      <p class="sv-take" data-draw="gap2017" data-source="s2017 resultats">—</p>
+    </div>
     <div class="sv-grid">
       <div class="sv-main">
+        <label class="sv-merge">
+          <input type="checkbox" role="switch" data-merge="2017" checked>
+          <span class="sv-switch" aria-hidden="true"></span>
+          <span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span>
+        </label>
         <div class="sv-bar">
           <div class="sv-cands" data-draw="cands2017" data-source="s2017 resultats">—</div>
           <div class="sv-tools" role="group" aria-label="Zoom du graphique">
-            <button type="button" data-zoomin="2017" aria-label="Zoomer" title="Zoomer">+</button>
-            <button type="button" data-zoomout="2017" aria-label="Dézoomer" title="Dézoomer">−</button>
+            <button type="button" class="sv-zbtn" data-zoomin="2017" aria-label="Zoomer" title="Zoomer">+</button>
+            <button type="button" class="sv-zbtn" data-zoomout="2017" aria-label="Dézoomer" title="Dézoomer">−</button>
             <button type="button" data-zoomreset="2017">Vue complète</button>
             <button type="button" class="sv-fullbtn" data-full="2017"><span class="sv-go">⤢ Plein écran</span><span class="sv-quit" hidden>✕ Quitter</span></button>
           </div>
         </div>
         <div class="sv-chart dash-skeleton" data-draw="chart2017" data-source="s2017 resultats"></div>
-        <p class="sv-help">Glisser pour se déplacer dans le temps · double-clic, boutons +/− ou Ctrl + molette pour zoomer (molette seule en plein écran) · Échap pour quitter le plein écran.</p>
+      <div class="sv-legend" aria-label="Légende">
+        <span><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="#66666A" fill-opacity="0.5"></circle></svg>un sondage</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="3" stroke-linecap="round"></line></svg>courbe moyenne</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="1.6" stroke-dasharray="5 3"></line></svg>courbe d'un institut</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="#66666A" stroke="#000" stroke-width="1.5"></circle></svg>résultat réel</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="#fff" stroke="#66666A" stroke-width="2"></circle></svg>moyenne des sondages de la dernière semaine avant l'élection</span>
+        <span><svg width="16" height="12" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="11" rx="2" fill="#FFF3CC" stroke="#E6C65C"></rect></svg>dernière semaine avant l'élection</span>
+        <span class="sv-legend-def"><i class="gapdot" style="background:#FFCC33"></i><b>sous-estimé</b> : les sondages lui donnaient moins que son score réel ; <i class="gapdot" style="background:#3357FF"></i><b>surestimé</b> : plus.</span>
+      </div>
+        <p class="sv-help">Survolez ou touchez un point pour voir le sondage. Zoom : boutons + / −, double-clic, Ctrl + molette ou deux doigts sur téléphone ; glisser pour se déplacer dans le temps.</p>
       </div>
       <aside class="sv-side" aria-label="Réglages 2017">
-        <label class="sv-merge"><input type="checkbox" data-merge="2017" checked><span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span></label>
-        <p class="sv-h">Instituts <button data-all="2017">Tout cocher</button><button data-none="2017">Aucun</button></p>
-        <div class="sv-chips" data-draw="chips2017" data-source="s2017">—</div>
+        <details class="sv-inst" data-inst>
+          <summary><span>Instituts</span><span class="sv-inst-hint">filtrer, courbes par institut</span></summary>
+          <p class="sv-h"><button data-all="2017">Tout cocher</button><button data-none="2017">Aucun</button></p>
+          <div class="sv-chips" data-draw="chips2017" data-source="s2017">—</div>
+        </details>
       </aside>
     </div>
   </section>
 
   <section class="sv-page" id="p2022" data-year="2022">
-    <p class="sv-take"><span class="sv-pill">Présidentielle 2022</span> Plus gros écart entre la dernière semaine de sondages et le résultat (parmi les candidats affichés) : <b data-draw="gap2022" data-source="s2022 resultats">—</b></p>
+    <div class="sv-sechead">
+      <span class="sv-pill">Présidentielle 2022</span>
+      <p class="sv-take" data-draw="gap2022" data-source="s2022 resultats">—</p>
+    </div>
     <div class="sv-grid">
       <div class="sv-main">
+        <label class="sv-merge">
+          <input type="checkbox" role="switch" data-merge="2022" checked>
+          <span class="sv-switch" aria-hidden="true"></span>
+          <span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span>
+        </label>
         <div class="sv-bar">
           <div class="sv-cands" data-draw="cands2022" data-source="s2022 resultats">—</div>
           <div class="sv-tools" role="group" aria-label="Zoom du graphique">
-            <button type="button" data-zoomin="2022" aria-label="Zoomer" title="Zoomer">+</button>
-            <button type="button" data-zoomout="2022" aria-label="Dézoomer" title="Dézoomer">−</button>
+            <button type="button" class="sv-zbtn" data-zoomin="2022" aria-label="Zoomer" title="Zoomer">+</button>
+            <button type="button" class="sv-zbtn" data-zoomout="2022" aria-label="Dézoomer" title="Dézoomer">−</button>
             <button type="button" data-zoomreset="2022">Vue complète</button>
             <button type="button" class="sv-fullbtn" data-full="2022"><span class="sv-go">⤢ Plein écran</span><span class="sv-quit" hidden>✕ Quitter</span></button>
           </div>
         </div>
         <div class="sv-chart dash-skeleton" data-draw="chart2022" data-source="s2022 resultats"></div>
-        <p class="sv-help">Glisser pour se déplacer dans le temps · double-clic, boutons +/− ou Ctrl + molette pour zoomer (molette seule en plein écran) · Échap pour quitter le plein écran.</p>
+      <div class="sv-legend" aria-label="Légende">
+        <span><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="#66666A" fill-opacity="0.5"></circle></svg>un sondage</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="3" stroke-linecap="round"></line></svg>courbe moyenne</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="1.6" stroke-dasharray="5 3"></line></svg>courbe d'un institut</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="#66666A" stroke="#000" stroke-width="1.5"></circle></svg>résultat réel</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="#fff" stroke="#66666A" stroke-width="2"></circle></svg>moyenne des sondages de la dernière semaine avant l'élection</span>
+        <span><svg width="16" height="12" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="11" rx="2" fill="#FFF3CC" stroke="#E6C65C"></rect></svg>dernière semaine avant l'élection</span>
+        <span class="sv-legend-def"><i class="gapdot" style="background:#FFCC33"></i><b>sous-estimé</b> : les sondages lui donnaient moins que son score réel ; <i class="gapdot" style="background:#3357FF"></i><b>surestimé</b> : plus.</span>
+      </div>
+        <p class="sv-help">Survolez ou touchez un point pour voir le sondage. Zoom : boutons + / −, double-clic, Ctrl + molette ou deux doigts sur téléphone ; glisser pour se déplacer dans le temps.</p>
       </div>
       <aside class="sv-side" aria-label="Réglages 2022">
-        <label class="sv-merge"><input type="checkbox" data-merge="2022" checked><span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span></label>
-        <p class="sv-h">Instituts <button data-all="2022">Tout cocher</button><button data-none="2022">Aucun</button></p>
-        <div class="sv-chips" data-draw="chips2022" data-source="s2022">—</div>
+        <details class="sv-inst" data-inst>
+          <summary><span>Instituts</span><span class="sv-inst-hint">filtrer, courbes par institut</span></summary>
+          <p class="sv-h"><button data-all="2022">Tout cocher</button><button data-none="2022">Aucun</button></p>
+          <div class="sv-chips" data-draw="chips2022" data-source="s2022">—</div>
+        </details>
       </aside>
     </div>
   </section>
 
   <section class="sv-page" id="p2027" data-year="2027" hidden>
-    <p class="sv-take"><span class="sv-pill">Présidentielle 2027</span> Pas encore de résultat : le premier tour est attendu en avril 2027. À droite, le niveau actuel de la courbe moyenne de chaque candidat.</p>
+    <div class="sv-sechead">
+      <span class="sv-pill">Présidentielle 2027</span>
+      <p class="sv-take">Pas encore de résultat : le premier tour est attendu en avril 2027. À droite, le niveau actuel de la courbe moyenne de chaque candidat.</p>
+    </div>
     <div class="sv-grid">
       <div class="sv-main">
+        <label class="sv-merge">
+          <input type="checkbox" role="switch" data-merge="2027" checked>
+          <span class="sv-switch" aria-hidden="true"></span>
+          <span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span>
+        </label>
         <div class="sv-bar">
           <div class="sv-cands" data-draw="cands2027" data-source="s2027 resultats">—</div>
           <div class="sv-tools" role="group" aria-label="Zoom du graphique">
-            <button type="button" data-zoomin="2027" aria-label="Zoomer" title="Zoomer">+</button>
-            <button type="button" data-zoomout="2027" aria-label="Dézoomer" title="Dézoomer">−</button>
+            <button type="button" class="sv-zbtn" data-zoomin="2027" aria-label="Zoomer" title="Zoomer">+</button>
+            <button type="button" class="sv-zbtn" data-zoomout="2027" aria-label="Dézoomer" title="Dézoomer">−</button>
             <button type="button" data-zoomreset="2027">Vue complète</button>
             <button type="button" class="sv-fullbtn" data-full="2027"><span class="sv-go">⤢ Plein écran</span><span class="sv-quit" hidden>✕ Quitter</span></button>
           </div>
         </div>
         <div class="sv-chart dash-skeleton" data-draw="chart2027" data-source="s2027 resultats"></div>
-        <p class="sv-help">Glisser pour se déplacer dans le temps · double-clic, boutons +/− ou Ctrl + molette pour zoomer (molette seule en plein écran) · Échap pour quitter le plein écran.</p>
+      <div class="sv-legend" aria-label="Légende">
+        <span><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="#66666A" fill-opacity="0.5"></circle></svg>un sondage</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="3" stroke-linecap="round"></line></svg>courbe moyenne</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="1.6" stroke-dasharray="5 3"></line></svg>courbe d'un institut</span>
+      </div>
+        <p class="sv-help">Survolez ou touchez un point pour voir le sondage. Zoom : boutons + / −, double-clic, Ctrl + molette ou deux doigts sur téléphone ; glisser pour se déplacer dans le temps.</p>
       </div>
       <aside class="sv-side" aria-label="Réglages 2027">
-        <label class="sv-merge"><input type="checkbox" data-merge="2027" checked><span><b>Fusionner les points en une courbe moyenne</b><small>Une seule courbe par candidat, calculée sur tous les sondages des instituts cochés.</small></span></label>
-        <p class="sv-h">Instituts <button data-all="2027">Tout cocher</button><button data-none="2027">Aucun</button></p>
-        <div class="sv-chips" data-draw="chips2027" data-source="s2027">—</div>
+        <details class="sv-inst" data-inst>
+          <summary><span>Instituts</span><span class="sv-inst-hint">filtrer, courbes par institut</span></summary>
+          <p class="sv-h"><button data-all="2027">Tout cocher</button><button data-none="2027">Aucun</button></p>
+          <div class="sv-chips" data-draw="chips2027" data-source="s2027">—</div>
+        </details>
       </aside>
     </div>
   </section>
 
-  <p class="sv-note">Source : listes de sondages de Wikipédia (fr) et résultats officiels du 1er tour. Un point = un sondage, une hypothèse testée (un institut teste parfois plusieurs listes de candidats dans le même sondage). Les courbes sont une moyenne locale des sondages, sans prolongement au-delà du dernier sondage ; avant le calcul, les hypothèses d'un même sondage sont moyennées. Dernière semaine = sondages terminés dans les <span data-draw="lastweek">—</span> jours avant le vote. Par défaut, seuls les <span data-draw="top">—</span> premiers candidats sont affichés (résultat du 1er tour, ou moyenne des sondages récents pour 2027) : cliquez sur un nom pour ajouter ou retirer un candidat. Passez sur un point pour voir l'institut, la date et l'hypothèse.</p>
+  <footer class="sv-foot">
+    <p class="sv-note">Sources : listes de sondages de Wikipédia (fr) ; résultats officiels du premier tour proclamés par le Conseil constitutionnel. Les sondages 2027 sont mis à jour automatiquement.</p>
+    <details class="sv-method">
+      <summary>Méthode</summary>
+      <ul>
+        <li><b>Période.</b> Pour chaque élection, les sondages de premier tour dont le terrain s'achève dans les douze mois précédant le vote (depuis avril 2026 pour 2027).</li>
+        <li><b>Un point = une hypothèse.</b> Un institut teste parfois plusieurs listes de candidats dans un même sondage : chaque liste testée est un point. Les valeurs « &lt; 1 % » sont comptées comme 0,5 %.</li>
+        <li><b>Courbe moyenne.</b> Les hypothèses d'un même sondage sont d'abord moyennées, puis la courbe est une moyenne locale pondérée (régression linéaire locale à noyau gaussien, d'environ cinq jours, élargi quand les sondages sont rares). Elle ne se prolonge pas au-delà du dernier sondage.</li>
+        <li><b>Dernière semaine avant l'élection.</b> Moyenne des sondages dont le terrain s'achève dans les <span data-draw="lastweek">—</span> jours précédant le vote, comparée au résultat officiel. Un candidat est dit sous-estimé quand cette moyenne est inférieure à son score réel, surestimé dans le cas inverse.</li>
+        <li><b>Candidats affichés.</b> Par défaut, les <span data-draw="top">—</span> premiers : selon le résultat du premier tour pour 2012, 2017 et 2022 ; selon la moyenne des sondages récents pour 2027. En 2027, tous les candidats testés au moins cinq fois sont disponibles.</li>
+        <li><b>Limites.</b> Les sondages comportent une marge d'erreur et ne constituent pas des prévisions ; les listes de Wikipédia peuvent être incomplètes ou corrigées après coup.</li>
+      </ul>
+    </details>
+  </footer>
+</div>
 </div>
 
 <script>
@@ -261,6 +407,9 @@ body{padding:clamp(8px,2.5vw,32px)}
   for (const b of document.querySelectorAll('.sv-tabs [data-tab]')) {
     b.addEventListener('click', () => { open(b.dataset.tab); });
   }
+  // instituts dépliés sur grand écran, repliés sur téléphone
+  const wide = window.matchMedia('(min-width: 760px)').matches;
+  for (const d of document.querySelectorAll('details[data-inst]')) d.open = wide;
   const m = /^p(\d{4})$/.exec(location.hash.slice(1));
   if (m && YEARS.includes(m[1])) open(m[1]);
 
@@ -341,7 +490,14 @@ body{padding:clamp(8px,2.5vw,32px)}
   const DAY = 864e5;
   const ASSUMED_2027 = '2027-04-11'; // 1er tour 2027 supposé à la mi-avril (date pas encore fixée)
   const LAST_WEEK = 7, RECENT_2027 = 30;
-  const INK = '#212320', CREAM = '#fffcf4', MUTED = '#6b675e', GRID = '#ece6d6', BAND = '#fef7d9';
+  const INK = '#000000', CREAM = '#ffffff', MUTED = '#66666A', GRID = '#ECECEA', BAND = '#FFF3CC';
+  const RED = '#D42A47';
+  // couleurs de l'écart (charte Jarod) : sous-estimé / surestimé
+  const GAPC = window.SV_GAP || {under: {fg: '#FFCC33'}, over: {fg: '#3357FF'}, dot: true}; // point jaune = sous-estimé, point bleu = surestimé
+  const gapC = (g) => (g > 0 ? GAPC.under : GAPC.over);
+  // écart sondages / résultat en mots : positif = sous-estimé (les sondages donnaient moins que le score réel)
+  const gapWord = (g, short) => (g > 0.05 ? (short ? 'sous-est. ' : 'sous-estimé de ') + f1(g) + ' pt' + (Math.abs(g) >= 2 ? 's' : '')
+    : g < -0.05 ? (short ? 'surest. ' : 'surestimé de ') + f1(-g) + ' pt' + (Math.abs(g) >= 2 ? 's' : '') : 'écart nul');
 
   const fr = d3.timeFormatLocale({dateTime: '%A %e %B %Y à %X', date: '%d/%m/%Y', time: '%H:%M:%S', periods: ['', ''],
     days: ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'], shortDays: ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'],
@@ -551,7 +707,15 @@ body{padding:clamp(8px,2.5vw,32px)}
       initHide(y, D, R);
       const S = summary(y, D, R);
       const best = S.items.filter((d) => d.gap != null && !S.st.hide.has(d.c)).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))[0];
-      el.textContent = best ? `${best.c}, ${f1(best.mean)} % dans les sondages, ${f1(best.res)} % dans les urnes (${fGap(best.gap)} pts)` : (D.cands.every((c) => S.st.hide.has(c)) ? 'aucun candidat affiché' : 'aucun sondage coché dans la dernière semaine');
+      el.replaceChildren();
+      if (!best) { el.textContent = D.cands.every((c) => S.st.hide.has(c)) ? 'Aucun candidat affiché.' : 'Aucun sondage coché dans la dernière semaine avant l\'élection.'; return; }
+      const under = best.gap > 0, pts = f1(Math.abs(best.gap));
+      const dir = document.createElement('span'); dir.className = 'dir'; dir.textContent = under ? 'sous-estimé' : 'surestimé';
+      { const c = gapC(best.gap); const dot = document.createElement('i'); dot.className = 'gapdot'; dot.style.background = c.fg; dir.prepend(dot); }
+      const nm = document.createElement('b'); nm.textContent = best.c;
+      const gp = document.createElement('b'); gp.textContent = `${pts} point${Math.abs(best.gap) >= 2 ? 's' : ''} de ${under ? 'moins' : 'plus'}`;
+      
+      el.append('Le candidat que les instituts ont le plus ', dir, ' : ', nm, ` : ${f1(best.mean)} % de moyenne dans la dernière semaine avant l'élection, ${f1(best.res)} % au vote, soit `, gp, ' que son score réel.');
     });
 
     // ——— le graphique (zoom, déplacement, plein écran) ———
@@ -572,12 +736,12 @@ body{padding:clamp(8px,2.5vw,32px)}
       const narrow = W < 620;
       const vh = window.innerHeight || 800;
       const H = full ? Math.round(Math.max(320, vh - 130))
-        : Math.round(Math.max(280, Math.min(560, W * (narrow ? 0.8 : 0.55), narrow ? vh * 0.5 : vh - 170)));
-      const CW = narrow ? 96 : Math.min(230, Math.max(170, W * 0.2));
+        : Math.round(Math.max(280, Math.min(560, W * (narrow ? 0.95 : 0.55), narrow ? vh * 0.62 : vh - 170)));
+      const CW = narrow ? 122 : Math.min(230, Math.max(180, W * 0.2));
 
       el.replaceChildren();
       const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-        .attr('aria-label', `Sondages ${y} et résultats du premier tour`).style('touch-action', 'none');
+        .attr('aria-label', `Sondages ${y} et résultats du premier tour`).style('touch-action', 'pan-y');
 
       const shown = S.on;
       let ymax = 0;
@@ -676,8 +840,9 @@ body{padding:clamp(8px,2.5vw,32px)}
         d.cur = e && (S.lastT - e.t) / DAY <= RECENT_2027 ? e.v : d.mean;
       }
       const nCl = items.filter((d) => (future ? d.cur != null : (d.res != null || d.mean != null))).length;
-      const compact = nCl * (narrow ? 26 : 34) > (H - M.b - M.t);
-      const lh = compact ? (narrow ? 14 : 16) : (narrow ? 26 : 34);
+      const lhFull = future ? (narrow ? 28 : 34) : (narrow ? 40 : 46);
+      const compact = nCl * lhFull > (H - M.b - M.t);
+      const lh = compact ? (narrow ? 14 : 16) : lhFull;
       const cl = items.map((d) => ({...d, ay: yy(future ? (d.cur != null ? d.cur : 0) : (d.res != null ? d.res : d.mean != null ? d.mean : 0))}))
         .filter((d) => (future ? d.cur != null : (d.res != null || d.mean != null))).sort((a, b) => a.ay - b.ay);
       cl.forEach((d) => { d.ly = d.ay; });
@@ -698,19 +863,23 @@ body{padding:clamp(8px,2.5vw,32px)}
           t1.append('tspan').attr('font-weight', 900).attr('fill', ccol(d.c)).text(d.c);
           const v = future ? f1(d.cur) : (d.res != null ? f1(d.res) : '—');
           t1.append('tspan').attr('dx', 5).attr('font-weight', 700).attr('fill', INK).text(v);
-          if (!future && d.gap != null) t1.append('tspan').attr('dx', 5).attr('fill', Math.abs(d.gap) >= 2 ? '#b31d14' : MUTED).attr('font-weight', 700).text(fGap(d.gap));
+          if (!future && d.gap != null) { t1.append('tspan').attr('dx', 5).attr('fill', gapC(d.gap).fg).text('●'); t1.append('tspan').attr('dx', 3).attr('fill', INK).attr('font-weight', 500).text(gapWord(d.gap, true)); }
           continue;
         }
-        const t = gx.append('text').attr('x', tx0).attr('y', d.ly - (narrow ? 2 : 4)).attr('font-size', narrow ? 11 : 13);
+        const y0 = future ? d.ly - (narrow ? 2 : 4) : d.ly - (narrow ? 8 : 10);
+        const t = gx.append('text').attr('x', tx0).attr('y', y0).attr('font-size', narrow ? 11 : 13);
         t.append('tspan').attr('font-weight', 900).attr('fill', ccol(d.c)).text(d.c);
-        if (!narrow && d.res != null) t.append('tspan').attr('dx', 6).attr('font-weight', 900).attr('fill', INK).text(f1(d.res) + ' %');
-        const s = gx.append('text').attr('x', tx0).attr('y', d.ly + (narrow ? 10 : 11)).attr('font-size', narrow ? 10 : 11).attr('fill', MUTED)
+        if (d.res != null) t.append('tspan').attr('dx', 6).attr('font-weight', 900).attr('fill', INK).text(f1(d.res) + ' %');
+        const s = gx.append('text').attr('x', tx0).attr('y', y0 + (narrow ? 12 : 15)).attr('font-size', narrow ? 10 : 11).attr('fill', MUTED)
           .style('font-variant-numeric', 'tabular-nums');
         if (future) s.text((narrow ? '' : (st.merge ? 'courbe moyenne ' : 'sondages récents ')) + f1(d.cur) + ' %');
-        else if (narrow) s.text(d.res != null ? f1(d.res) + (d.gap != null ? ' · ' + fGap(d.gap) : '') : '—');
         else {
-          s.append('tspan').text('sondages ' + (d.mean != null ? f1(d.mean) : '—'));
-          if (d.gap != null) s.append('tspan').attr('dx', 6).attr('font-weight', 900).attr('fill', Math.abs(d.gap) >= 2 ? '#b31d14' : INK).text('écart ' + fGap(d.gap));
+          s.text((narrow ? 'sond. ' : 'sondages ') + (d.mean != null ? f1(d.mean) + ' %' : '—'));
+          if (d.gap != null) {
+            const gy = y0 + (narrow ? 24 : 29);
+            gx.append('circle').attr('cx', tx0 + 4).attr('cy', gy - (narrow ? 3.5 : 4)).attr('r', narrow ? 3.5 : 4).attr('fill', gapC(d.gap).fg);
+            gx.append('text').attr('x', tx0 + 12).attr('y', gy).attr('font-size', narrow ? 10 : 11).attr('font-weight', 500).attr('fill', INK).text(gapWord(d.gap, narrow));
+          }
         }
       }
 
@@ -756,8 +925,8 @@ body{padding:clamp(8px,2.5vw,32px)}
         void xr;
       };
 
-      ov.on('pointerleave', hide).on('pointermove', (ev) => {
-        if (!pts.length || ev.buttons) return hide();
+      const showTip = (ev) => {
+        if (!pts.length || (ev.buttons && ev.pointerType === 'mouse')) return hide();
         const [mx, my] = d3.pointer(ev, svg.node());
         const sc = W / (svg.node().getBoundingClientRect().width || W);
         const vp = pts.filter((d) => d.px >= M.l && d.px <= plotR + 2);
@@ -780,16 +949,19 @@ body{padding:clamp(8px,2.5vw,32px)}
           rr.append(ci, a, b); tip.append(rr);
         }
         tip.hidden = false;
-        const bw = el.clientWidth, bx = d.px / sc + 6, by = d.py / sc + 6;
+        const bw = el.clientWidth, bx = d.px / sc + 6, by = d.py / sc + 8;
         const tw = tip.offsetWidth, th = tip.offsetHeight;
         tip.style.left = Math.max(4, Math.min(bw - tw - 4, bx + 14)) + 'px';
         tip.style.top = Math.max(4, by - th - 12 < 4 ? by + 14 : by - th - 12) + 'px';
-      });
+      };
+      ov.on('pointermove', showTip).on('pointerdown', showTip)
+        .on('pointerleave', (ev) => { if (ev.pointerType === 'mouse') hide(); }).on('pointercancel', hide);
+      if (!el._svOutside) { el._svOutside = true; document.addEventListener('pointerdown', (ev) => { if (!el.contains(ev.target)) for (const t of el.querySelectorAll('.sv-tip')) t.hidden = true; }); }
 
       // zoom horizontal : glisser pour se déplacer ; molette en plein écran ou avec Ctrl ; double-clic pour zoomer
       const zoom = d3.zoom().scaleExtent([1, 40])
         .extent([[M.l, 0], [plotR, H]]).translateExtent([[M.l, 0], [plotR, H]])
-        .filter((ev) => (ev.type === 'wheel' ? (ev.ctrlKey || ev.metaKey || !!el.closest('.is-full')) : !ev.button))
+        .filter((ev) => (ev.type === 'wheel' ? (ev.ctrlKey || ev.metaKey || !!el.closest('.is-full')) : ev.type.startsWith('touch') ? ev.touches.length > 1 : !ev.button))
         .on('start', () => ov.style('cursor', 'grabbing'))
         .on('end', () => ov.style('cursor', 'grab'))
         .on('zoom', (ev) => { st.zt = ev.transform; xz = ev.transform.rescaleX(xBase); render(); });
@@ -805,7 +977,6 @@ body{padding:clamp(8px,2.5vw,32px)}
 })();
 </script>
 
-</div>
 <script>dash._start(); window.scrollTo(0, 0); addEventListener('load', () => window.scrollTo(0, 0));</script>
 <script>
 (() => {
