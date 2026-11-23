@@ -14,6 +14,7 @@
   --green:#33FF59;--green-soft:#E3FFE8;--red:#D42A47;--blue:#3357FF;--yellow-soft:#FFF3CC;
   --font:'Montserrat','Helvetica Neue',Arial,sans-serif}
 html,body{margin:0;background:#fff;color:var(--ink)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
 .sv-wrap{max-width:1240px;margin:0 auto;padding:clamp(14px,3vw,40px) clamp(14px,3vw,40px) 40px;box-sizing:border-box}
 .sv{display:flex;flex-direction:column;gap:22px;font-family:var(--font)}
@@ -22,7 +23,7 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
 .sv button:focus-visible,.sv input:focus-visible,.sv summary:focus-visible,.sv-modal button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 
 /* En-tête */
-.sv-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;border-bottom:3px solid var(--ink);padding-bottom:14px}
+.sv-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px 24px;border-bottom:3px solid var(--ink);padding-bottom:14px}
 .sv-head h1{margin:0;font-weight:900;font-size:clamp(32px,6vw,68px);line-height:1;letter-spacing:-0.02em;text-transform:uppercase;display:flex;flex-wrap:wrap;align-items:center;gap:0 .22em}
 .vs{display:inline-block;background:var(--green);color:var(--ink);border-radius:999px;padding:.08em .38em .1em;font-size:.6em;line-height:1;letter-spacing:0}
 .sv-headtxt{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -221,6 +222,53 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
   .sv-modal-x{width:34px;height:34px;font-size:19px}
 }
 
+/* Téléphone : refonte compacte */
+.h-mob{display:none}
+.sv-callouts{margin:4px 6px 4px;border-top:1.5px solid var(--line2)}
+.sv-co{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;padding:6px 2px;border-bottom:1px solid var(--line2)}
+.sv-co:last-child{border-bottom:none}
+.sv-co .n{font-weight:800;font-size:13.5px}
+.sv-co .v{font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.sv-co .s{grid-column:1/-1;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sv-co .g{color:var(--ink)}
+@container (max-width:720px){
+  .h-desk{display:none}.h-mob{display:inline}
+  .sv-pill{display:none}
+  .sv-merge{border-radius:999px;align-items:center;padding:8px 14px 8px 10px}
+  .sv-merge small{display:none}
+  .sv-merge b{display:inline;font-size:13.5px}
+  .sv-switch{width:40px;height:24px}.sv-switch::after{width:16px;height:16px}
+  .sv-merge input:checked + .sv-switch::after{transform:translateX(16px)}
+  .sv-tools button{font-size:12px;padding:4px 11px}
+  .sv-main{gap:8px}
+}
+@media (max-width:600px){
+  .sv-wrap{padding:14px 14px 30px}
+  .sv{gap:16px}
+  .sv-head{grid-template-columns:minmax(0,1fr);gap:8px;padding-bottom:10px}
+  .sv-headside{order:-1}
+  .sv-head h1{font-size:30px}
+  .sv-kicker{padding-bottom:0}
+  .sv-tabs button{padding:8px 0;flex:1;text-align:center;font-size:16px}
+  .sv-tabs{flex-wrap:nowrap}
+}
+
+/* plein écran sur téléphone : une seule colonne, instituts sous le graphique */
+@media (max-width:900px), (max-height:600px){
+.sv-grid.is-full{grid-template-columns:minmax(0,1fr);padding:8px 10px;gap:12px}
+.sv-grid.is-full .sv-side{max-height:none;overflow:visible}
+}
+
+/* téléphone en paysage : graphique sur toute la largeur, en-tête compact */
+@media (max-height:500px) and (orientation:landscape){
+.sv-grid{grid-template-columns:minmax(0,1fr)}
+.sv-head h1{font-size:30px}
+.sv-kicker{padding-bottom:0}
+.sv-merge{border-radius:999px;align-items:center;padding:7px 14px 7px 10px}
+.sv-merge small{display:none}
+.sv-merge b{display:inline;font-size:13.5px}
+}
+
 </style>
 <script>try { history.scrollRestoration = 'manual'; } catch (e) {}</script>
 <script src="assets/d3.min.js"></script>
@@ -240,7 +288,7 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
     <p>Elle a une vocation informative et non prévisionnelle : un sondage est une photographie de l'opinion à un moment donné, et un écart avec le résultat ne signifie pas nécessairement une erreur.</p>
     <ul class="sv-modal-howto">
       <li>Chaque point correspond à une hypothèse testée dans un sondage ; la courbe en donne une moyenne lissée.</li>
-      <li>Le point plein indique le score obtenu au premier tour, le cercle vide la moyenne des sondages réalisés dans la dernière semaine avant l'élection. L'écart entre les deux figure à droite du graphique.</li>
+      <li>Le point plein indique le score obtenu au premier tour, le cercle vide la moyenne des sondages réalisés dans la dernière semaine avant l'élection. L'écart entre les deux est indiqué pour chaque candidat.</li>
       <li>Les onglets permettent de changer de scrutin. On peut filtrer par institut, ajouter ou retirer des candidats, zoomer et passer en plein écran. La méthode et les rappels sur les sondages sont détaillés en bas de page.</li>
     </ul>
     <p class="src">Sources : listes de sondages de Wikipédia (fr) ; résultats officiels proclamés par le Conseil constitutionnel.</p>
@@ -302,7 +350,7 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
         <span><svg width="16" height="12" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="11" rx="2" fill="#FFF3CC" stroke="#E6C65C"></rect></svg>dernière semaine avant l'élection</span>
         <span class="sv-legend-def"><i class="gapdot" style="background:#FFCC33"></i><b>sous-estimé</b> : les sondages lui donnaient moins que son score réel ; <i class="gapdot" style="background:#3357FF"></i><b>surestimé</b> : plus.</span>
       </div>
-        <p class="sv-help">Survolez ou touchez un point pour voir le sondage. Zoom : boutons + / −, double-clic, Ctrl + molette ou deux doigts sur téléphone ; glisser pour se déplacer dans le temps.</p>
+        <p class="sv-help"><span class="h-desk">Survolez un point pour voir le sondage. Zoom : boutons + / −, double-clic ou Ctrl + molette ; glisser pour se déplacer dans le temps.</span><span class="h-mob">Touchez un point pour voir le sondage · zoom à deux doigts.</span></p>
       </div>
       <aside class="sv-side" aria-label="Réglages 2012">
         <details class="sv-inst" data-inst>
@@ -345,7 +393,7 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
         <span><svg width="16" height="12" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="11" rx="2" fill="#FFF3CC" stroke="#E6C65C"></rect></svg>dernière semaine avant l'élection</span>
         <span class="sv-legend-def"><i class="gapdot" style="background:#FFCC33"></i><b>sous-estimé</b> : les sondages lui donnaient moins que son score réel ; <i class="gapdot" style="background:#3357FF"></i><b>surestimé</b> : plus.</span>
       </div>
-        <p class="sv-help">Survolez ou touchez un point pour voir le sondage. Zoom : boutons + / −, double-clic, Ctrl + molette ou deux doigts sur téléphone ; glisser pour se déplacer dans le temps.</p>
+        <p class="sv-help"><span class="h-desk">Survolez un point pour voir le sondage. Zoom : boutons + / −, double-clic ou Ctrl + molette ; glisser pour se déplacer dans le temps.</span><span class="h-mob">Touchez un point pour voir le sondage · zoom à deux doigts.</span></p>
       </div>
       <aside class="sv-side" aria-label="Réglages 2017">
         <details class="sv-inst" data-inst>
@@ -388,7 +436,7 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
         <span><svg width="16" height="12" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="11" rx="2" fill="#FFF3CC" stroke="#E6C65C"></rect></svg>dernière semaine avant l'élection</span>
         <span class="sv-legend-def"><i class="gapdot" style="background:#FFCC33"></i><b>sous-estimé</b> : les sondages lui donnaient moins que son score réel ; <i class="gapdot" style="background:#3357FF"></i><b>surestimé</b> : plus.</span>
       </div>
-        <p class="sv-help">Survolez ou touchez un point pour voir le sondage. Zoom : boutons + / −, double-clic, Ctrl + molette ou deux doigts sur téléphone ; glisser pour se déplacer dans le temps.</p>
+        <p class="sv-help"><span class="h-desk">Survolez un point pour voir le sondage. Zoom : boutons + / −, double-clic ou Ctrl + molette ; glisser pour se déplacer dans le temps.</span><span class="h-mob">Touchez un point pour voir le sondage · zoom à deux doigts.</span></p>
       </div>
       <aside class="sv-side" aria-label="Réglages 2022">
         <details class="sv-inst" data-inst>
@@ -403,7 +451,7 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
   <section class="sv-page" id="p2027" data-year="2027" hidden>
     <div class="sv-sechead">
       <span class="sv-pill">Présidentielle 2027</span>
-      <p class="sv-take">Pas encore de résultat : le premier tour aura lieu le 18 avril 2027. À droite, le niveau actuel de la courbe moyenne de chaque candidat.</p>
+      <p class="sv-take">Pas encore de résultat : le premier tour aura lieu le 18 avril 2027. Le niveau actuel de la courbe moyenne est indiqué pour chaque candidat.</p>
     </div>
     <div class="sv-grid">
       <div class="sv-main">
@@ -427,7 +475,7 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
         <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="3" stroke-linecap="round"></line></svg>courbe moyenne</span>
         <span><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="#66666A" stroke-width="1.6" stroke-dasharray="5 3"></line></svg>courbe d'un institut</span>
       </div>
-        <p class="sv-help">Survolez ou touchez un point pour voir le sondage. Zoom : boutons + / −, double-clic, Ctrl + molette ou deux doigts sur téléphone ; glisser pour se déplacer dans le temps.</p>
+        <p class="sv-help"><span class="h-desk">Survolez un point pour voir le sondage. Zoom : boutons + / −, double-clic ou Ctrl + molette ; glisser pour se déplacer dans le temps.</span><span class="h-mob">Touchez un point pour voir le sondage · zoom à deux doigts.</span></p>
       </div>
       <aside class="sv-side" aria-label="Réglages 2027">
         <details class="sv-inst" data-inst>
@@ -812,9 +860,11 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
       const W = Math.max(300, el.clientWidth - 12);
       const narrow = W < 620;
       const vh = window.innerHeight || 800;
-      const H = full ? Math.round(Math.max(320, vh - 130))
-        : Math.round(Math.max(280, Math.min(560, W * (narrow ? 0.95 : 0.55), narrow ? vh * 0.62 : vh - 170)));
-      const CW = narrow ? 122 : Math.min(230, Math.max(180, W * 0.2));
+      const small = vh < 600 || narrow;
+      const H = full ? Math.round(small ? Math.max(240, narrow ? Math.min(vh - 24, W * 1.4) : vh - 24) : Math.max(320, vh - 130))
+        : Math.round(Math.max(280, Math.min(560, W * (narrow ? 0.85 : 0.55), narrow ? vh * 0.58 : vh - 170)));
+      { const gr = el.closest('.sv-grid'); if (gr) { if (!full) delete gr.dataset.sc; else if (small && gr.dataset.sc !== '1') { gr.dataset.sc = '1'; requestAnimationFrame(() => { gr.scrollTop += el.getBoundingClientRect().top - gr.getBoundingClientRect().top - 8; }); } } }
+      const CW = narrow ? 12 : Math.min(230, Math.max(180, W * 0.2));
 
       el.replaceChildren();
       const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
@@ -930,6 +980,25 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
         for (let i = cl.length - 2; i >= 0; i--) if (cl[i + 1].ly - cl[i].ly < lh) cl[i].ly = cl[i + 1].ly - lh;
         if (cl.length && cl[0].ly < M.t) { const sh = M.t - cl[0].ly; for (const d of cl) d.ly += sh; }
       }
+      // téléphone : les encadrés passent sous le graphique, qui garde toute la largeur
+      if (narrow) {
+        const list = document.createElement('div'); list.className = 'sv-callouts';
+        const rows = items.map((d) => ({...d, v: future ? d.cur : (d.res != null ? d.res : d.mean)})).filter((d) => d.v != null).sort((a, b) => b.v - a.v);
+        for (const d of rows) {
+          const r = document.createElement('div'); r.className = 'sv-co';
+          const nm = document.createElement('span'); nm.className = 'n'; nm.style.color = ccol(d.c); nm.textContent = d.c;
+          const val = document.createElement('span'); val.className = 'v'; val.textContent = f1(d.v) + ' %';
+          const sub = document.createElement('span'); sub.className = 's';
+          if (future) sub.textContent = st.merge ? 'niveau actuel de la courbe moyenne' : 'moyenne des sondages récents';
+          else {
+            sub.textContent = 'sondages ' + (d.mean != null ? f1(d.mean) + ' %' : '—');
+            if (d.gap != null) { const g = document.createElement('span'); g.className = 'g'; const i = document.createElement('i'); i.className = 'gapdot'; i.style.background = gapC(d.gap).fg; g.append(i, gapWord(d.gap)); sub.append(' · ', g); }
+          }
+          r.append(nm, val, sub); list.append(r);
+        }
+        el.append(list);
+        cl.length = 0;
+      }
       const gx = svg.append('g');
       const tx0 = plotR + (narrow ? 16 : 22);
       const conn = [];
@@ -979,7 +1048,7 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
         // axe x : graduations adaptées au zoom
         gxa.selectAll('*').remove();
         const dom = xz.domain();
-        const nT = Math.max(3, Math.floor((plotR - M.l) / (narrow ? 90 : 72)));
+        const nT = Math.max(3, Math.floor((plotR - M.l) / (narrow ? 62 : 72)));
         const tks = xz.ticks(nT).filter((d) => d >= dom[0] && d <= dom[1]);
         for (const tk of tks) {
           const isMonth = tk.getUTCDate() === 1;
@@ -1038,11 +1107,31 @@ body{font-family:var(--font);font-weight:500;-webkit-font-smoothing:antialiased}
       // zoom horizontal : glisser pour se déplacer ; molette en plein écran ou avec Ctrl ; double-clic pour zoomer
       const zoom = d3.zoom().scaleExtent([1, 40])
         .extent([[M.l, 0], [plotR, H]]).translateExtent([[M.l, 0], [plotR, H]])
-        .filter((ev) => (ev.type === 'wheel' ? (ev.ctrlKey || ev.metaKey || !!el.closest('.is-full')) : ev.type.startsWith('touch') ? ev.touches.length > 1 : !ev.button))
+        .filter((ev) => (ev.type === 'wheel' ? (ev.ctrlKey || ev.metaKey || !!el.closest('.is-full')) : ev.type.startsWith('touch') ? false : !ev.button))
         .on('start', () => ov.style('cursor', 'grabbing'))
         .on('end', () => ov.style('cursor', 'grab'))
         .on('zoom', (ev) => { st.zt = ev.transform; xz = ev.transform.rescaleX(xBase); render(); });
       ov.call(zoom);
+      { let pz = null;
+        const sv = ov.node().ownerSVGElement;
+        const sx = (t) => { const r = sv.getBoundingClientRect(); return (t.clientX - r.left) * (W / r.width); };
+        const hideTips = () => { for (const t of el.querySelectorAll('.sv-tip')) t.hidden = true; };
+        ov.on('touchstart.pz', (ev) => {
+          if (ev.touches.length !== 2) return;
+          const a = sx(ev.touches[0]), b = sx(ev.touches[1]);
+          pz = {d: Math.max(20, Math.abs(b - a)), x: d3.zoomTransform(ov.node()).invertX((a + b) / 2), k: d3.zoomTransform(ov.node()).k};
+          hideTips();
+        }, {passive: true})
+        .on('touchmove.pz', (ev) => {
+          if (!pz || ev.touches.length !== 2) return;
+          ev.preventDefault();
+          const a = sx(ev.touches[0]), b = sx(ev.touches[1]);
+          const k = Math.max(1, Math.min(40, pz.k * Math.max(20, Math.abs(b - a)) / pz.d));
+          const t = zoom.constrain()(d3.zoomIdentity.translate((a + b) / 2 - pz.x * k, 0).scale(k), [[M.l, 0], [plotR, H]], [[M.l, 0], [plotR, H]]);
+          ov.call(zoom.transform, t); hideTips();
+        }, {passive: false})
+        .on('touchend.pz touchcancel.pz', (ev) => { if (ev.touches.length < 2) pz = null; });
+      }
       window.SVZOOM = window.SVZOOM || {};
       window.SVZOOM[y] = {
         by: (k) => ov.transition().duration(250).call(zoom.scaleBy, k, [plotR - (plotR - M.l) * 0.15, H / 2]),
